@@ -47,30 +47,25 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .main-container {
             width: 100%;
-            max-width: 980px; /* Lebar untuk tampilan landscape */
+            min-height: 100vh; /* Mengisi tinggi layar */
             background-color: var(--card-color);
-            padding: 40px 50px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            padding: 50px 80px; /* Padding untuk konten di dalam */
             animation: fadeIn 0.7s ease-in-out;
             transition: background-color 0.3s ease, border-color 0.3s ease;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
             text-align: center;
             margin-bottom: 40px;
+            flex-shrink: 0; /* Mencegah header menyusut */
         }
 
         .main-title {
@@ -105,19 +100,22 @@
             color: var(--text-secondary);
         }
 
-        select, button {
+        select, button, input[type="text"] {
             width: 100%;
             padding: 15px;
             border-radius: 8px;
             font-size: 16px;
-            cursor: pointer;
             border: 1px solid var(--border-color);
             background-color: var(--input-bg);
             color: var(--text-primary);
             transition: all 0.2s ease;
         }
 
-        select:focus, button:focus {
+        select, button {
+             cursor: pointer;
+        }
+
+        select:focus, button:focus, input[type="text"]:focus {
             outline: none;
             border-color: var(--primary-blue);
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
@@ -197,22 +195,32 @@
         .content-wrapper {
             display: flex;
             gap: 40px;
-            align-items: flex-start;
+            align-items: stretch; /* Membuat kolom sama tinggi */
+            flex-grow: 1; /* Memastikan wrapper mengisi sisa ruang */
         }
         .qr-section {
             flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         .info-section {
-            flex: 1;
-            margin-top: 50px; /* Align with QR code box top */
+            flex: 1.5; /* Memberi lebih banyak ruang untuk tabel */
+            display: flex;
+            flex-direction: column;
         }
 
-        /* NEW TABLE STYLES */
+        /* TABLE & CONTROLS STYLES */
         .table-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 15px;
             margin-bottom: 15px;
+        }
+
+        #search-input {
+            padding: 10px 15px;
+            flex-grow: 1;
         }
 
         #refresh-data {
@@ -221,6 +229,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         #loading-spinner {
@@ -233,7 +242,7 @@
         }
 
         .table-container {
-            max-height: 400px;
+            flex-grow: 1; /* Membuat tabel mengisi sisa ruang vertikal */
             overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -255,6 +264,22 @@
             position: sticky;
             top: 0;
             font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        #tabel-absensi thead th:hover {
+            background-color: var(--border-color);
+        }
+
+        #tabel-absensi thead th .sort-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            opacity: 0.5;
+        }
+        
+        #tabel-absensi thead th.sorted .sort-indicator {
+            opacity: 1;
         }
 
         #tabel-absensi tbody tr:last-child td {
@@ -269,11 +294,48 @@
             background-color: #2a2a2a;
         }
 
+        /* Dashboard Rekapitulasi Styles */
+        #recap-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .stat-box {
+            background-color: var(--bg-color);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-box-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-box-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .stat-box-detail {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+
         /* Theme Switcher Styles */
         .theme-switch-wrapper {
             position: absolute;
-            top: 40px;
-            right: 40px;
+            top: 50px;
+            right: 80px;
             display: flex;
             align-items: center;
         }
@@ -319,6 +381,12 @@
             border-radius: 50%;
         }
 
+        /* Siswa view adjustments */
+        #siswa-view {
+            max-width: 500px;
+            margin: auto;
+        }
+
     </style>
 </head>
 <body>
@@ -340,6 +408,7 @@
         <div id="guru-view">
             <div class="content-wrapper">
                 <div class="qr-section">
+                    <h2>Sesi Absensi</h2>
                     <div class="control-group">
                         <label for="pilih-minggu">Pilih Sesi Absensi:</label>
                         <select id="pilih-minggu">
@@ -356,16 +425,35 @@
                         </div>
                         <div id="qrcode"></div>
                     </div>
+                    <div class="control-group" style="margin-top: 20px;">
+                        <button id="generate-pdf-button">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down-fill" viewBox="0 0 16 16">
+                                 <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zm-1 4v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 11.293V7.5a.5.5 0 0 1 1 0z"/>
+                             </svg>
+                             <span>Jadikan Laporan PDF</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="info-section">
                      <h2>Data Absensi Real-time</h2>
+                     <div id="recap-dashboard">
+                         <div class="stat-box">
+                             <p class="stat-box-title">JUMLAH HADIR</p>
+                             <p class="stat-box-value" id="hadir-count">0</p>
+                         </div>
+                         <div class="stat-box">
+                            <p class="stat-box-title">PERSENTASE KEHADIRAN</p>
+                            <p class="stat-box-value"><span id="persentase-kehadiran">0</span>%</p>
+                            <p class="stat-box-detail"><span id="hadir-detail">0</span> dari <span id="total-siswa">0</span> siswa</p>
+                         </div>
+                     </div>
                      <div class="table-controls">
-                         <button id="refresh-data">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
+                         <input type="text" id="search-input" placeholder="Cari nama, kelas, atau waktu...">
+                         <button id="refresh-data" title="Refresh Data">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                  <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                                  <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                              </svg>
-                             Refresh Data
                          </button>
                          <div id="loading-spinner" style="display: none;"></div>
                      </div>
@@ -373,10 +461,10 @@
                          <table id="tabel-absensi">
                              <thead>
                                  <tr>
-                                     <th>Waktu</th>
-                                     <th>Nama Siswa</th>
-                                     <th>Kelas</th>
-                                     <th>Minggu</th>
+                                     <th data-column="Timestamp">Waktu <span class="sort-indicator"></span></th>
+                                     <th data-column="Nama_Siswa">Nama Siswa <span class="sort-indicator"></span></th>
+                                     <th data-column="Kelas">Kelas <span class="sort-indicator"></span></th>
+                                     <th data-column="Minggu_Ke">Minggu <span class="sort-indicator"></span></th>
                                  </tr>
                              </thead>
                              <tbody>
@@ -407,6 +495,10 @@
 
     <!-- Library untuk QR Code Generator -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- Libraries untuk PDF Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -445,17 +537,17 @@
             } else {
                 applyTheme('light');
             }
+            
+            // --- Deployment Information ---
+            // Web app URL: https://script.google.com/macros/s/AKfycbzhe_9yjHNV1NMc0kInC-A0oztjJYCMn2N3HLJksgLikCxv5KXEJ-VAn0jkeAuBZsU/exec
 
             // --- URL SUDAH TERHUBUNG KE GOOGLE SHEET ---
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAvghFvUJDfjdqTtZg7-9HyFeXDtS28koVofBwpWstdkgnPxHe_2DcIXwUTYXpT-Jn/exec'; 
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhe_9yjHNV1NMc0kInC-A0oztjJYCMn2N3HLJksgLikCxv5KXEJ-VAn0jkeAuBZsU/exec'; 
 
             // --- DATABASE SISWA ---
-            const siswaKelompok1 = [
-                { nama: 'Justin Justicio Mongdong', kelas: 'XI-1' }, { nama: 'Andhika Putra', kelas: 'XI-1' }, { nama: 'ASTITI SUGIHARTI', kelas: 'XII-1' }, { nama: 'DANA SATRIA', kelas: 'XI-4' }, { nama: 'Dhivo Satria Fradiansyah', kelas: 'XI-2' }, { nama: 'Levina Kesiah Anastasia', kelas: 'XII-1' }, { nama: 'Indah Rachel Manullang', kelas: 'XII-1' }, { nama: 'Ari Dwi Saputro', kelas: 'XII-2' }, { nama: 'Stefani kristin', kelas: 'XII-1' }, { nama: 'ISNAINI RIYANTI', kelas: 'XII-1' }, { nama: 'DJOHAN NOER HUDHA', kelas: 'XI-3' }, { nama: 'M.Wandanov Tambun Bungai', kelas: 'XI-3' }, { nama: 'Fahruzzaini fahri', kelas: 'XII-5' }, { nama: 'MUHAMAD GHATTA', kelas: 'XII-2' }, { nama: 'ZEFANYA FUTRI VANESA', kelas: 'XII-1' }, { nama: 'KRISTINA SINTANI', kelas: 'XII-1' }, { nama: 'RAHEL DASTIANO SIREGAR', kelas: 'XI-2' }, { nama: 'RAGIL KRIDO LAKSONO', kelas: 'XI-3' }, { nama: 'AHMAD ZUBAIDI', kelas: 'XII-5' }, { nama: 'DAVIN LUTVIAN ANGGARA', kelas: 'XI-3' }, { nama: 'Ni Kadek Riska Pebriyani', kelas: 'XI-1' }, { nama: 'Nadiya Sofwa', kelas: 'XI-3' }, { nama: 'MIKO JULIADI RAHMAD', kelas: 'XII-2' }, { nama: 'MIKA JULIADI RAHMAN', kelas: 'XII-3' }, { nama: 'RIYA', kelas: 'XII-5' }, { nama: 'Muhammad Kala Abizar', kelas: 'XII-2' }, { nama: 'VALENTINO SATRIA ANANTA', kelas: 'XII-5' }, { nama: 'ISNAINI RIYANTI', kelas: 'XII-1' }, { nama: 'Farhan Eka Saputra', kelas: 'XII-1' }
-            ];
-            const siswaKelompok2 = [
-                { nama: 'RIZKY PUTRA PRATAMA', kelas: 'XI-5' }, { nama: 'Murfid Adriansyah', kelas: 'XI-5' }, { nama: 'Frensiska oktavia', kelas: 'XI-5' }, { nama: 'DJOHAN NOER HUDHA', kelas: 'XI-3' }, { nama: 'Firman Adi Pratama', kelas: 'X-7' }, { nama: 'DIMAS ARDIANSYAH', kelas: 'X-7' }, { nama: 'NIA TRIANINGSIH', kelas: 'XI-5' }, { nama: 'Indri', kelas: 'X-4' }, { nama: 'Retno febriyana putri', kelas: 'X-3' }, { nama: 'Dwi Oktavia Puspitasari', kelas: 'X-3' }, { nama: 'M. CHARIS FADLIH', kelas: 'XI-6' }, { nama: 'M. Sugeng Riadin', kelas: 'X-?' }, { nama: 'RANGGA SATIYANDA SYAHPUTRA', kelas: 'XI-5' }, { nama: 'Naiara Putri Yuanita Imup', kelas: 'X-?' }, { nama: 'Rafael Ady Sera', kelas: 'X-?' }, { nama: 'Zulfa Asna lailia Rahmah', kelas: 'X-3' }, { nama: 'Fiyer Barka Damirianto', kelas: 'X-3' }, { nama: 'Nadia nur hijurotul kaffah', kelas: 'X-3' }, { nama: 'FAKHRI MAHENDRA WIBAWA', kelas: 'X-4' }, { nama: 'Christian nathanael mahardika', kelas: 'X-4' }, { nama: 'CRYSTAL ANABELLA RAMADANI', kelas: 'X-6' }, { nama: 'HAFIDZ KHOIRUL HUDA', kelas: 'X-1' }, { nama: 'Intan Dewi Puspita Sari', kelas: 'X-3' }, { nama: 'RANGGA SATIYANDA SYAHPUTRA', kelas: 'XI-5' }, { nama: 'Dhesta Maulana Putra', kelas: 'XI-5' }, { nama: 'Arya Apriananda Putra', kelas: 'XI-5' }, { nama: 'Damar Aditya Fandi', kelas: 'XI-7' }, { nama: 'ARYFA PUTRI MAHARANI', kelas: 'XI-4' }, { nama: 'Andre arsyafin setiawan', kelas: 'XI-4' }
-            ];
+            // Data siswa sekarang akan diambil dari Google Sheet, bukan di sini lagi.
+            let siswaKelompok1 = [];
+            let siswaKelompok2 = [];
             
             const guruView = document.getElementById('guru-view');
             const siswaView = document.getElementById('siswa-view');
@@ -468,51 +560,261 @@
             const pesanEl = document.getElementById('pesan');
             const STORAGE_KEY = 'absensiEkskulData';
             let qrCodeInstance = null;
+            
+            // --- PDF BUTTON ELEMENT ---
+            const pdfButton = document.getElementById('generate-pdf-button');
 
-            // NEW ELEMENTS FOR DATA DISPLAY
+            // --- DATA DISPLAY & MANIPULATION ---
             const refreshButton = document.getElementById('refresh-data');
             const loadingSpinner = document.getElementById('loading-spinner');
             const tabelAbsensiBody = document.querySelector('#tabel-absensi tbody');
+            const searchInput = document.getElementById('search-input');
+            const tableHeaders = document.querySelectorAll('#tabel-absensi th');
 
-            // --- NEW FUNCTION TO FETCH AND DISPLAY DATA ---
+            // --- RECAP DASHBOARD ELEMENTS ---
+            const hadirCountEl = document.getElementById('hadir-count');
+            const persentaseKehadiranEl = document.getElementById('persentase-kehadiran');
+            const hadirDetailEl = document.getElementById('hadir-detail');
+            const totalSiswaEl = document.getElementById('total-siswa');
+
+            let fullAttendanceData = []; // Store all recent data
+            let currentSort = { column: 'Timestamp', order: 'desc' }; // Default sort
+            let totalSiswaCount = 0;
+
+            // --- UPDATE RECAP DASHBOARD FUNCTION ---
+            const updateRecapDashboard = (data, totalSiswa) => {
+                const hadirCount = data.length;
+                const persentase = totalSiswa > 0 ? ((hadirCount / totalSiswa) * 100).toFixed(0) : 0;
+
+                hadirCountEl.textContent = hadirCount;
+                persentaseKehadiranEl.textContent = persentase;
+                hadirDetailEl.textContent = hadirCount;
+                totalSiswaEl.textContent = totalSiswa;
+            };
+
+            // --- RENDER TABLE FUNCTION ---
+            const renderTable = (dataToRender) => {
+                tabelAbsensiBody.innerHTML = ''; // Clear table
+                if (dataToRender.length === 0) {
+                    tabelAbsensiBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada data yang cocok.</td></tr>';
+                } else {
+                    dataToRender.forEach(absen => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${absen['Timestamp'] || '-'}</td>
+                            <td>${absen['Nama_Siswa'] || '-'}</td>
+                            <td>${absen['Kelas'] || '-'}</td>
+                            <td>${absen['Minggu_Ke'] || '-'}</td>
+                        `;
+                        tabelAbsensiBody.appendChild(row);
+                    });
+                }
+                updateSortIndicators();
+            };
+
+            // --- UPDATE SORT INDICATORS ---
+            const updateSortIndicators = () => {
+                tableHeaders.forEach(th => {
+                    const column = th.dataset.column;
+                    const indicator = th.querySelector('.sort-indicator');
+                    if (column === currentSort.column) {
+                        th.classList.add('sorted');
+                        indicator.textContent = currentSort.order === 'asc' ? '▲' : '▼';
+                    } else {
+                        th.classList.remove('sorted');
+                        indicator.textContent = '';
+                    }
+                });
+            };
+            
+            // --- MAIN DATA FETCHING FUNCTION ---
             const fetchAndDisplayAttendance = async () => {
                 loadingSpinner.style.display = 'block';
                 tabelAbsensiBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>';
 
                 try {
                     const response = await fetch(SCRIPT_URL);
-                    if (!response.ok) {
-                        throw new Error('Gagal mengambil data dari server.');
-                    }
+                    if (!response.ok) throw new Error('Gagal mengambil data dari server.');
                     const data = await response.json();
 
-                    tabelAbsensiBody.innerHTML = ''; // Kosongkan tabel sebelum diisi
-                    if (data.length === 0) {
-                        tabelAbsensiBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi.</td></tr>';
-                    } else {
-                        data.forEach(absen => {
-                            const row = document.createElement('tr');
-                            // Nama kolom disesuaikan dengan header di Google Sheet
-                            row.innerHTML = `
-                                <td>${absen['Timestamp'] || '-'}</td>
-                                <td>${absen['Nama_Siswa'] || '-'}</td>
-                                <td>${absen['Kelas'] || '-'}</td>
-                                <td>${absen['Minggu_Ke'] || '-'}</td>
-                            `;
-                            tabelAbsensiBody.appendChild(row);
-                        });
-                    }
+                    // PERBAIKAN: Menghapus filter 24 jam.
+                    // Sekarang semua data absensi akan dimuat agar laporan dan filter per minggu berfungsi dengan benar untuk data yang sudah lewat.
+                    fullAttendanceData = data;
+                    
+                    applySortAndFilter();
+
                 } catch (error) {
                     console.error('Error fetching attendance:', error);
                     tabelAbsensiBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #dc3545;">Terjadi kesalahan saat memuat data.</td></tr>`;
+                    updateRecapDashboard([], totalSiswaCount); // Reset dashboard on error
                 } finally {
                     loadingSpinner.style.display = 'none';
                 }
             };
+
+            // --- NEW FUNCTION: FETCH SISWA DATA ---
+            const fetchSiswaData = async () => {
+                 try {
+                    // Menambahkan parameter action=getSiswa untuk memberitahu skrip kita mau data siswa
+                    const response = await fetch(`${SCRIPT_URL}?action=getSiswa`);
+                    if (!response.ok) throw new Error('Gagal mengambil data siswa dari server.');
+                    const data = await response.json();
+                    
+                    // --- PERBAIKAN & PENGECEKAN ERROR LEBIH BAIK ---
+                    // Cek jika data yang diterima adalah array (kemungkinan besar data absensi, bukan data siswa)
+                    if (Array.isArray(data)) {
+                        console.error("Data yang diterima adalah array, seharusnya objek data siswa. Ini biasanya terjadi jika Google Apps Script belum di-deploy ulang dengan versi terbaru.", data);
+                        throw new Error("Format data salah. Kemungkinan Google Apps Script belum di-deploy ulang. Silakan deploy ulang skrip Anda dan pastikan skrip memiliki fungsi untuk 'getSiswa'.");
+                    }
+
+                    // Cek jika properti kelompok1 dan kelompok2 ada di dalam data
+                    if(data && data.kelompok1 !== undefined && data.kelompok2 !== undefined) {
+                        siswaKelompok1 = data.kelompok1;
+                        siswaKelompok2 = data.kelompok2;
+                    } else {
+                        console.error("Data yang diterima tidak memiliki properti 'kelompok1' atau 'kelompok2':", data);
+                        throw new Error("Format data siswa dari Google Sheet tidak sesuai. Pastikan sheet 'Kelompok 1' dan 'Kelompok 2' ada dan tidak kosong.");
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching student data:', error);
+                    // Menampilkan pesan error di halaman jika gagal mengambil data siswa
+                    document.querySelector('.content-wrapper').innerHTML = `<p style="color: #dc3545; text-align: center; width: 100%;"><b>Error:</b> Gagal memuat data siswa dari Google Sheet. <br/><br/><i>Detail: ${error.message}</i></p>`;
+                }
+            };
             
+            // --- APPLY SORT AND FILTER ---
+            const applySortAndFilter = () => {
+                let processedData = [...fullAttendanceData];
+                const selectedWeek = pilihMinggu.value;
+                let totalSiswaUntukPersen = totalSiswaCount; // Default ke total semua siswa
+
+                // Jika minggu spesifik dipilih, filter data dan hitung ulang total siswa untuk minggu itu
+                if (selectedWeek) {
+                    processedData = processedData.filter(item => item['Minggu_Ke'] == selectedWeek);
+                    
+                    const kelompokSiswaMingguIni = (selectedWeek === '1' || selectedWeek === '3') ? siswaKelompok1 : siswaKelompok2;
+                    const uniqueSiswaNames = new Set(kelompokSiswaMingguIni.map(s => s.nama));
+                    totalSiswaUntukPersen = uniqueSiswaNames.size;
+                }
+                
+                // Filtering
+                const searchTerm = searchInput.value.toLowerCase();
+                if (searchTerm) {
+                    processedData = processedData.filter(item => 
+                        Object.values(item).some(val => 
+                            String(val).toLowerCase().includes(searchTerm)
+                        )
+                    );
+                }
+
+                // Sorting
+                processedData.sort((a, b) => {
+                    let valA = a[currentSort.column] || '';
+                    let valB = b[currentSort.column] || '';
+
+                    // --- PERBAIKAN: Logika sorting untuk tanggal yang akurat ---
+                    if (currentSort.column === 'Timestamp') {
+                        const parseTimestamp = (ts) => {
+                            if (!ts || typeof ts !== 'string') return new Date(0); // return epoch untuk tanggal tidak valid
+                            const [d, m, y, H, M, S] = ts.split(/[- :]/);
+                            return new Date(y, m - 1, d, H, M, S);
+                        };
+                        const dateA = parseTimestamp(valA);
+                        const dateB = parseTimestamp(valB);
+                        return currentSort.order === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+                    
+                    if (currentSort.column === 'Minggu_Ke') { // Sort secara numerik
+                        return currentSort.order === 'asc' ? valA - valB : valB - valA;
+                    }
+                    
+                    // Sort secara abjad untuk kolom lain
+                    const comparison = valA.toString().localeCompare(valB.toString());
+                    return currentSort.order === 'asc' ? comparison : -comparison;
+                });
+                
+                updateRecapDashboard(processedData, totalSiswaUntukPersen); // Update dashboard dengan data yang sudah diproses
+                renderTable(processedData);
+            };
+
             const getAbsensiData = () => JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
             const saveAbsensiData = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             
+            // --- PDF GENERATION FUNCTION ---
+            const generateAttendancePDF = () => {
+                if (fullAttendanceData.length === 0) {
+                    alert('Tidak ada data absensi untuk membuat laporan.');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.text('Laporan Kehadiran Ekskul KKA', 105, 20, { align: 'center' });
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`SMAN 1 Pangkalan Banteng - Dibuat pada: ${today}`, 105, 28, { align: 'center' });
+
+                const dataByWeek = fullAttendanceData.reduce((acc, current) => {
+                    const week = current['Minggu_Ke'];
+                    if (!acc[week]) acc[week] = [];
+                    acc[week].push(current);
+                    return acc;
+                }, {});
+
+                let yPosition = 40;
+                const sortedWeeks = Object.keys(dataByWeek).sort((a, b) => a - b);
+
+                for (const week of sortedWeeks) {
+                    const weeklyData = dataByWeek[week];
+                    const kelompokSiswa = (week === '1' || week === '3') ? siswaKelompok1 : siswaKelompok2;
+                    const totalSiswaMingguIni = new Set(kelompokSiswa.map(s => s.nama)).size;
+                    const hadirCount = weeklyData.length;
+                    const persentase = totalSiswaMingguIni > 0 ? ((hadirCount / totalSiswaMingguIni) * 100).toFixed(0) : 0;
+                    
+                    if (yPosition > 40 && yPosition + 40 > doc.internal.pageSize.height) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.text(`Laporan Pertemuan - Minggu ke-${week}`, 14, yPosition);
+                    yPosition += 8;
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.text(`Rekapitulasi: ${hadirCount} dari ${totalSiswaMingguIni} siswa hadir (${persentase}%)`, 14, yPosition);
+                    yPosition += 5;
+
+                    const head = [['No.', 'Nama Siswa', 'Kelas', 'Waktu Absen']];
+                    const body = weeklyData.sort((a,b) => a['Nama_Siswa'].localeCompare(b['Nama_Siswa'])).map((row, index) => [
+                        index + 1,
+                        row['Nama_Siswa'],
+                        row['Kelas'],
+                        row['Timestamp']
+                    ]);
+
+                    doc.autoTable({
+                        head: head,
+                        body: body,
+                        startY: yPosition,
+                        theme: 'grid',
+                        headStyles: { fillColor: [0, 123, 255] },
+                        styles: { fontSize: 9 }
+                    });
+
+                    yPosition = doc.autoTable.previous.finalY + 15;
+                }
+
+                doc.save(`Laporan_Kehadiran_Ekskul_KKA_${new Date().toISOString().slice(0,10)}.pdf`);
+            };
+
+
             const generateQRCode = (minggu) => {
                 qrcodeContainer.innerHTML = '';
                 qrcodePlaceholder.style.display = 'none';
@@ -520,30 +822,45 @@
                 qrCodeInstance = new QRCode(qrcodeContainer, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
             };
             
-            const params = new URLSearchParams(window.location.search);
-            const page = params.get('page');
-            const minggu = params.get('minggu');
+            // --- INITIALIZE APP FUNCTION ---
+            const initializeApp = async () => {
+                await fetchSiswaData(); // Ambil data siswa dulu
 
-            if (page === 'absen' && minggu) {
-                guruView.style.display = 'none';
-                siswaView.style.display = 'block';
-                mingguKeSpan.textContent = minggu;
-                const kelompokSiswa = (minggu === '1' || minggu === '3') ? siswaKelompok1 : siswaKelompok2;
-                kelompokSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
-                pilihNama.innerHTML = '<option value="">-- Pilih Nama --</option>';
-                kelompokSiswa.forEach(siswa => {
-                    const option = document.createElement('option');
-                    option.value = JSON.stringify(siswa);
-                    option.textContent = `${siswa.nama} (${siswa.kelas})`;
-                    pilihNama.appendChild(option);
-                });
-            } else {
-                guruView.style.display = 'block';
-                siswaView.style.display = 'none';
-                // Automatically load data for teacher view
-                fetchAndDisplayAttendance();
-            }
+                // Sisa kode inisialisasi dijalankan setelah data siswa didapat
+                const params = new URLSearchParams(window.location.search);
+                const page = params.get('page');
+                const minggu = params.get('minggu');
 
+                if (page === 'absen' && minggu) {
+                    // Adjust layout for student view on full screen
+                    document.querySelector('.main-container').style.display = 'flex';
+                    document.querySelector('.main-container').style.alignItems = 'center';
+                    guruView.style.display = 'none';
+                    siswaView.style.display = 'block';
+
+                    mingguKeSpan.textContent = minggu;
+                    const kelompokSiswa = (minggu === '1' || minggu === '3') ? siswaKelompok1 : siswaKelompok2;
+                    kelompokSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
+                    pilihNama.innerHTML = '<option value="">-- Pilih Nama --</option>';
+                    kelompokSiswa.forEach(siswa => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(siswa);
+                        option.textContent = `${siswa.nama} (${siswa.kelas})`;
+                        pilihNama.appendChild(option);
+                    });
+                } else {
+                    // Calculate total unique students for the dashboard
+                    const allSiswa = [...siswaKelompok1, ...siswaKelompok2];
+                    const uniqueSiswaNames = new Set(allSiswa.map(s => s.nama));
+                    totalSiswaCount = uniqueSiswaNames.size;
+                    totalSiswaEl.textContent = totalSiswaCount; // Initial set
+
+                    guruView.style.display = 'block';
+                    siswaView.style.display = 'none';
+                    fetchAndDisplayAttendance();
+                }
+            };
+            
             pilihMinggu.addEventListener('change', () => {
                 const mingguTerpilih = pilihMinggu.value;
                 if (mingguTerpilih) generateQRCode(mingguTerpilih);
@@ -551,10 +868,24 @@
                     qrcodeContainer.innerHTML = '';
                     qrcodePlaceholder.style.display = 'block';
                 }
+                applySortAndFilter(); // Panggil ulang filter untuk update tabel dan dasbor
             });
             
-            // Add event listener for the refresh button
+            pdfButton.addEventListener('click', generateAttendancePDF);
             refreshButton.addEventListener('click', fetchAndDisplayAttendance);
+            searchInput.addEventListener('input', applySortAndFilter);
+            tableHeaders.forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.column;
+                    if (currentSort.column === column) {
+                        currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.order = 'asc';
+                    }
+                    applySortAndFilter();
+                });
+            });
 
             tombolHadir.addEventListener('click', async () => {
                 const siswaTerpilihJSON = pilihNama.value;
@@ -566,6 +897,8 @@
                 }
                 
                 const siswaTerpilih = JSON.parse(siswaTerpilihJSON);
+                const params = new URLSearchParams(window.location.search);
+                const minggu = params.get('minggu');
                 const dataAbsensiLokal = getAbsensiData();
 
                 const sudahAbsen = dataAbsensiLokal.some(item => item.nama === siswaTerpilih.nama && item.minggu.toString() === minggu);
@@ -609,6 +942,9 @@
                     tombolHadir.disabled = false;
                 }
             });
+
+            // --- Start The App ---
+            initializeApp();
         });
     </script>
 </body>
