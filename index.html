@@ -193,20 +193,6 @@
         body.dark-mode .pesan-sukses { background-color: rgba(0, 123, 255, 0.2); color: #80bfff; }
         body.dark-mode .pesan-error { background-color: rgba(255, 255, 255, 0.1); color: var(--text-primary); border-left: 5px solid var(--text-secondary); }
 
-        .gemini-result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #e7f3ff;
-            border-left: 5px solid var(--primary-blue);
-            color: #004085;
-        }
-
-        body.dark-mode .gemini-result {
-            background-color: rgba(0, 123, 255, 0.15);
-            color: #cce5ff;
-        }
-
         /* Layout for landscape view */
         .content-wrapper {
             display: flex;
@@ -416,7 +402,6 @@
             <button id="tombol-hadir">KONFIRMASI KEHADIRAN</button>
 
             <p id="pesan" style="display: none;"></p>
-            <div id="fun-fact-container" class="gemini-result" style="display: none;"></div>
         </div>
     </div>
 
@@ -481,7 +466,6 @@
             const pilihNama = document.getElementById('pilih-nama');
             const tombolHadir = document.getElementById('tombol-hadir');
             const pesanEl = document.getElementById('pesan');
-            const funFactContainer = document.getElementById('fun-fact-container');
             const STORAGE_KEY = 'absensiEkskulData';
             let qrCodeInstance = null;
 
@@ -525,20 +509,6 @@
                     loadingSpinner.style.display = 'none';
                 }
             };
-            
-            async function callGeminiAPI(prompt) {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                try {
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Tidak bisa mendapatkan fakta menarik saat ini.";
-                } catch (error) {
-                    console.error("Error calling Gemini API:", error);
-                    return "Maaf, terjadi kesalahan saat menghubungi AI.";
-                }
-            }
             
             const getAbsensiData = () => JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
             const saveAbsensiData = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -631,11 +601,6 @@
                     
                     const updatedAbsensi = [...dataAbsensiLokal, dataBaru];
                     saveAbsensiData(updatedAbsensi);
-                    
-                    funFactContainer.style.display = 'block';
-                    funFactContainer.textContent = 'Mencari fakta menarik... ✨';
-                    const funFact = await callGeminiAPI("Berikan satu fakta menarik dan singkat (fun fact) tentang manfaat kegiatan ekstrakurikuler bagi siswa.");
-                    funFactContainer.innerHTML = `<strong>Fakta Menarik:</strong> ${funFact}`;
 
                 } catch (error) {
                     console.error('Error sending data to Google Sheet:', error);
