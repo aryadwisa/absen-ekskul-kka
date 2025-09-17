@@ -559,7 +559,6 @@
             const pilihNama = document.getElementById('pilih-nama');
             const tombolHadir = document.getElementById('tombol-hadir');
             const pesanEl = document.getElementById('pesan');
-            const STORAGE_KEY = 'absensiEkskulData';
             let qrCodeInstance = null;
             
             const pdfButton = document.getElementById('generate-pdf-button');
@@ -659,6 +658,21 @@
                 }
             };
             
+            // --- FUNGSI BARU: Mengambil data absensi saja untuk pengecekan di halaman siswa ---
+            const fetchAttendanceDataOnly = async () => {
+                try {
+                    const response = await fetch(SCRIPT_URL);
+                    if (!response.ok) throw new Error('Gagal mengambil data absensi.');
+                    fullAttendanceData = await response.json();
+                } catch (error) {
+                    console.error('Gagal memuat data absensi untuk pengecekan.', error);
+                    tombolHadir.disabled = true; // Nonaktifkan tombol jika data tidak bisa dimuat
+                    pesanEl.textContent = 'Error: Gagal memuat data. Tombol dinonaktifkan.';
+                    pesanEl.className = 'pesan-error';
+                    pesanEl.style.display = 'block';
+                }
+            };
+
             const applySortAndFilter = () => {
                 let processedData = [...fullAttendanceData];
                 const selectedWeek = pilihMinggu.value;
@@ -795,6 +809,9 @@
                     guruView.style.display = 'none';
                     siswaView.style.display = 'block';
 
+                    // Ambil data absensi untuk pengecekan duplikat
+                    await fetchAttendanceDataOnly();
+
                     mingguKeSpan.textContent = minggu;
                     const kelompokSiswa = (minggu === '1' || minggu === '3') ? siswaKelompok1 : siswaKelompok2;
                     kelompokSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
@@ -910,9 +927,13 @@
                 const siswaTerpilih = JSON.parse(siswaTerpilihJSON);
                 const params = new URLSearchParams(window.location.search);
                 const minggu = params.get('minggu');
-                const dataAbsensiLokal = getAbsensiData();
 
-                const sudahAbsen = dataAbsensiLokal.some(item => item.nama === siswaTerpilih.nama && item.minggu.toString() === minggu);
+                // --- PERBAIKAN: Pengecekan duplikat menggunakan data dari Google Sheet ---
+                const sudahAbsen = fullAttendanceData.some(item => 
+                    item.Nama_Siswa === siswaTerpilih.nama && 
+                    item.Minggu_Ke.toString() === minggu
+                );
+                
                 if (sudahAbsen) {
                     pesanEl.textContent = 'Anda sudah melakukan absensi untuk minggu ini.';
                     pesanEl.className = 'pesan-error';
@@ -936,7 +957,6 @@
                     pesanEl.textContent = 'Absensi berhasil! Data Anda telah terekam.';
                     pesanEl.classList.add('pesan-sukses');
                     pilihNama.disabled = true;
-                    saveAbsensiData([...dataAbsensiLokal, dataBaru]);
                 } catch (error) {
                     console.error('Error sending data to Google Sheet:', error);
                     pesanEl.textContent = 'Gagal mengirim data. Periksa koneksi internet Anda dan coba lagi.';
