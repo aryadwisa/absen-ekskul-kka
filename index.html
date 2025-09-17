@@ -66,68 +66,6 @@
             animation: spin 1s linear infinite;
         }
 
-
-        /* --- FITUR KEAMANAN: LOGIN OVERLAY --- */
-        #login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.3s ease;
-        }
-
-        .login-box {
-            background-color: var(--card-color);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .login-box h2 {
-            border-bottom: none;
-            margin-bottom: 10px;
-            padding-bottom: 0;
-            font-size: 1.8rem;
-        }
-
-        .login-box p {
-            color: var(--text-secondary);
-            margin-bottom: 25px;
-        }
-
-        .login-box .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        #password-input {
-            text-align: center;
-            font-size: 1.2rem;
-        }
-
-        #login-button {
-            font-size: 1.1rem;
-        }
-
-        #login-error {
-            color: #dc3545;
-            margin-top: 15px;
-            height: 20px; /* Reserve space to prevent layout shift */
-            font-weight: 600;
-        }
-
         .main-container {
             width: 100%;
             min-height: 100vh; /* Mengisi tinggi layar */
@@ -138,6 +76,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            visibility: hidden; /* Sembunyikan konten utama saat loading awal */
         }
 
         .header {
@@ -412,19 +351,6 @@
         <div class="loader-spinner"></div>
     </div>
 
-    <!-- Layar Login untuk Guru -->
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2>Akses Panel Guru</h2>
-            <p>Silakan masukkan password untuk melanjutkan.</p>
-            <div class="input-group">
-                <input type="password" id="password-input" placeholder="Password">
-                <button id="login-button">Masuk</button>
-            </div>
-            <p id="login-error"></p>
-        </div>
-    </div>
-
     <div class="main-container">
 
         <div class="header">
@@ -532,17 +458,11 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- Deployment Information ---
-            // Web app URL: https://script.google.com/macros/s/AKfycbzhe_9yjHNV1NMc0kInC-A0oztjJYCMn2N3HLJksgLikCxv5KXEJ-VAn0jkeAuBZsU/exec
+            // Web app URL: https://script.google.com/macros/s/AKfycbwlWSyn6ia73H3OJzSoeGf-ylgSWczNAdnxfKMIOyOBU0pIbVJLLH3kvI_k5WWMIpX-/exec
 
             // --- URL SUDAH TERHUBUNG KE GOOGLE SHEET ---
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhe_9yjHNV1NMc0kInC-A0oztjJYCMn2N3HLJksgLikCxv5KXEJ-VAn0jkeAuBZsU/exec'; 
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlWSyn6ia73H3OJzSoeGf-ylgSWczNAdnxfKMIOyOBU0pIbVJLLH3kvI_k5WWMIpX-/exec'; 
 
-            // --- GURU SECURITY ---
-            const GURU_PASSWORD = 'gurukoding'; // Ganti password di sini
-            const loginOverlay = document.getElementById('login-overlay');
-            const loginButton = document.getElementById('login-button');
-            const passwordInput = document.getElementById('password-input');
-            const loginError = document.getElementById('login-error');
             const globalLoaderOverlay = document.getElementById('global-loader-overlay');
 
             // --- DATABASE SISWA ---
@@ -619,60 +539,6 @@
                 });
             };
             
-            const fetchAndDisplayAttendance = async () => {
-                loadingSpinner.style.display = 'block';
-                tabelAbsensiBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>';
-                try {
-                    const response = await fetch(SCRIPT_URL);
-                    if (!response.ok) throw new Error('Gagal mengambil data dari server.');
-                    const data = await response.json();
-                    fullAttendanceData = data;
-                    applySortAndFilter();
-                } catch (error) {
-                    console.error('Error fetching attendance:', error);
-                    tabelAbsensiBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #dc3545;">Terjadi kesalahan saat memuat data.</td></tr>`;
-                    updateRecapDashboard([], totalSiswaCount);
-                } finally {
-                    loadingSpinner.style.display = 'none';
-                }
-            };
-
-            const fetchSiswaData = async () => {
-                 try {
-                    const response = await fetch(`${SCRIPT_URL}?action=getSiswa`);
-                    if (!response.ok) throw new Error('Gagal mengambil data siswa dari server.');
-                    const data = await response.json();
-                    
-                    if (Array.isArray(data)) {
-                        throw new Error("Format data salah. Kemungkinan Google Apps Script belum di-deploy ulang.");
-                    }
-                    if(data && data.kelompok1 !== undefined && data.kelompok2 !== undefined) {
-                        siswaKelompok1 = data.kelompok1;
-                        siswaKelompok2 = data.kelompok2;
-                    } else {
-                        throw new Error("Format data siswa dari Google Sheet tidak sesuai.");
-                    }
-                } catch (error) {
-                    console.error('Error fetching student data:', error);
-                    document.querySelector('.content-wrapper').innerHTML = `<p style="color: #dc3545; text-align: center; width: 100%;"><b>Error:</b> Gagal memuat data siswa. <br/><i>Detail: ${error.message}</i></p>`;
-                }
-            };
-            
-            // --- FUNGSI BARU: Mengambil data absensi saja untuk pengecekan di halaman siswa ---
-            const fetchAttendanceDataOnly = async () => {
-                try {
-                    const response = await fetch(SCRIPT_URL);
-                    if (!response.ok) throw new Error('Gagal mengambil data absensi.');
-                    fullAttendanceData = await response.json();
-                } catch (error) {
-                    console.error('Gagal memuat data absensi untuk pengecekan.', error);
-                    tombolHadir.disabled = true; // Nonaktifkan tombol jika data tidak bisa dimuat
-                    pesanEl.textContent = 'Error: Gagal memuat data. Tombol dinonaktifkan.';
-                    pesanEl.className = 'pesan-error';
-                    pesanEl.style.display = 'block';
-                }
-            };
-
             const applySortAndFilter = () => {
                 let processedData = [...fullAttendanceData];
                 const selectedWeek = pilihMinggu.value;
@@ -796,21 +662,42 @@
                 qrCodeInstance = new QRCode(qrcodeContainer, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
             };
             
+            // --- FUNGSI BARU: Mengambil semua data awal dalam satu panggilan ---
+            const fetchInitialData = async () => {
+                try {
+                    // Menambahkan parameter action=getInitialData untuk memberitahu skrip kita mau semua data
+                    const response = await fetch(`${SCRIPT_URL}?action=getInitialData`);
+                    if (!response.ok) throw new Error('Gagal mengambil data awal dari server.');
+                    const data = await response.json();
+
+                    if(data && data.siswaData && data.absensiData) {
+                        siswaKelompok1 = data.siswaData.kelompok1;
+                        siswaKelompok2 = data.siswaData.kelompok2;
+                        fullAttendanceData = data.absensiData;
+                    } else {
+                        throw new Error("Format data awal dari Google Sheet tidak sesuai.");
+                    }
+                } catch (error) {
+                    console.error('Error fetching initial data:', error);
+                    mainContainer.innerHTML = `<p style="color: #dc3545; text-align: center; width: 100%; padding: 40px;"><b>Error:</b> Gagal memuat data. <br/><i>Detail: ${error.message}</i></p>`;
+                    mainContainer.style.visibility = 'visible';
+                }
+            };
+            
             const initializeApp = async () => {
-                await fetchSiswaData(); 
                 const params = new URLSearchParams(window.location.search);
                 const page = params.get('page');
                 const minggu = params.get('minggu');
 
-                mainContainer.style.visibility = 'visible'; // Make content visible
+                await fetchInitialData();
+
+                mainContainer.style.visibility = 'visible';
+
                 if (page === 'absen' && minggu) {
                     mainContainer.style.display = 'flex';
                     mainContainer.style.alignItems = 'center';
                     guruView.style.display = 'none';
                     siswaView.style.display = 'block';
-
-                    // Ambil data absensi untuk pengecekan duplikat
-                    await fetchAttendanceDataOnly();
 
                     mingguKeSpan.textContent = minggu;
                     const kelompokSiswa = (minggu === '1' || minggu === '3') ? siswaKelompok1 : siswaKelompok2;
@@ -829,7 +716,7 @@
                     totalSiswaEl.textContent = totalSiswaCount;
                     guruView.style.display = 'block';
                     siswaView.style.display = 'none';
-                    await fetchAndDisplayAttendance(); // PASTIKAN INI DIAWAIT
+                    applySortAndFilter(); // Tampilkan data yang sudah diambil
                 }
             };
 
@@ -840,52 +727,10 @@
                 }, 300);
             };
 
-            const runAuthenticatedApp = () => {
+            const startApp = () => {
                 initializeApp().finally(hideGlobalLoader);
             };
             
-            const handleLogin = () => {
-                if (passwordInput.value === GURU_PASSWORD) {
-                    sessionStorage.setItem('isGuruAuthenticated', 'true');
-                    loginOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        loginOverlay.style.display = 'none';
-                    }, 300);
-                    
-                    globalLoaderOverlay.style.display = 'flex';
-                    globalLoaderOverlay.style.opacity = '1';
-                    runAuthenticatedApp(); 
-                } else {
-                    loginError.textContent = 'Password salah, coba lagi.';
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
-            };
-
-            const checkAuthAndInitialize = () => {
-                const params = new URLSearchParams(window.location.search);
-                const isSiswaPage = params.get('page') === 'absen';
-
-                if (isSiswaPage) {
-                    loginOverlay.style.display = 'none';
-                    runAuthenticatedApp();
-                    return;
-                }
-
-                if (sessionStorage.getItem('isGuruAuthenticated') === 'true') {
-                    loginOverlay.style.display = 'none';
-                    runAuthenticatedApp();
-                } else {
-                    hideGlobalLoader(); 
-                    mainContainer.style.visibility = 'hidden'; 
-                    loginOverlay.style.display = 'flex';
-                    loginButton.addEventListener('click', handleLogin);
-                    passwordInput.addEventListener('keyup', (event) => {
-                        if (event.key === 'Enter') handleLogin();
-                    });
-                }
-            };
-
             pilihMinggu.addEventListener('change', () => {
                 const mingguTerpilih = pilihMinggu.value;
                 if (mingguTerpilih) {
@@ -899,8 +744,14 @@
                 applySortAndFilter(); 
             });
             
-            pdfButton.addEventListener('click', generateAttendancePDF);
-            refreshButton.addEventListener('click', fetchAndDisplayAttendance);
+            const refreshData = async () => {
+                 loadingSpinner.style.display = 'block';
+                 await fetchInitialData();
+                 applySortAndFilter();
+                 loadingSpinner.style.display = 'none';
+            }
+            refreshButton.addEventListener('click', refreshData);
+            
             searchInput.addEventListener('input', applySortAndFilter);
             tableHeaders.forEach(th => {
                 th.addEventListener('click', () => {
@@ -928,7 +779,6 @@
                 const params = new URLSearchParams(window.location.search);
                 const minggu = params.get('minggu');
 
-                // --- PERBAIKAN: Pengecekan duplikat menggunakan data dari Google Sheet ---
                 const sudahAbsen = fullAttendanceData.some(item => 
                     item.Nama_Siswa === siswaTerpilih.nama && 
                     item.Minggu_Ke.toString() === minggu
@@ -965,8 +815,8 @@
                 }
             });
 
-            // --- Mulai Aplikasi dengan Pengecekan Keamanan ---
-            checkAuthAndInitialize();
+            // --- Mulai Aplikasi ---
+            startApp();
         });
     </script>
 </body>
