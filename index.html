@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absen Ekskul KKA SMAN 1 Pangkalan Banteng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-color: #ffffff;
+            --primary-blue: #007bff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --input-bg: #ffffff;
+            --black: #000000;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --card-color: #1c1c1c;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #303030;
+            --input-bg: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 980px; /* Lebar untuk tampilan landscape */
+            background-color: var(--card-color);
+            padding: 40px 50px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.7s ease-in-out;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .sub-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        h1, h2 {
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        select, button {
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        select:focus, button:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+
+        body.dark-mode select {
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        }
+        
+        button {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        
+        button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+        }
+
+        #qrcode-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: var(--bg-color);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            min-height: 300px;
+            transition: background-color 0.3s;
+        }
+
+        #qrcode {
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #qrcode-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        #pesan {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .pesan-sukses { background-color: rgba(0, 123, 255, 0.1); color: #004085; border-left: 5px solid var(--primary-blue); }
+        .pesan-error { background-color: rgba(52, 58, 64, 0.1); color: var(--text-primary); border-left: 5px solid var(--black); }
+
+        body.dark-mode .pesan-sukses { background-color: rgba(0, 123, 255, 0.2); color: #80bfff; }
+        body.dark-mode .pesan-error { background-color: rgba(255, 255, 255, 0.1); color: var(--text-primary); border-left: 5px solid var(--text-secondary); }
+
+        .gemini-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #e7f3ff;
+            border-left: 5px solid var(--primary-blue);
+            color: #004085;
+        }
+
+        body.dark-mode .gemini-result {
+            background-color: rgba(0, 123, 255, 0.15);
+            color: #cce5ff;
+        }
+
+        /* Layout for landscape view */
+        .content-wrapper {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+        .qr-section {
+            flex: 1;
+        }
+        .info-section {
+            flex: 1;
+            margin-top: 50px; /* Align with QR code box top */
+        }
+
+        /* NEW TABLE STYLES */
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #refresh-data {
+            width: auto;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        #tabel-absensi {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #tabel-absensi th, #tabel-absensi td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #tabel-absensi thead th {
+            background-color: var(--bg-color);
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+        }
+
+        #tabel-absensi tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        #tabel-absensi tbody tr:nth-child(even) {
+            background-color: var(--bg-color);
+        }
+
+        body.dark-mode #tabel-absensi tbody tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
+
+        /* Theme Switcher Styles */
+        .theme-switch-wrapper {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 50px;
+        }
+        .theme-switch input {
+            display:none;
+        }
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+        }
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+        }
+        input:checked + .slider {
+            background-color: var(--primary-blue);
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" />
+                <div class="slider round"></div>
+            </label>
+        </div>
+
+        <div class="header">
+            <h1 class="main-title">Absen Ekskul KKA</h1>
+            <p class="sub-title">SMAN 1 Pangkalan Banteng</p>
+        </div>
+
+        <!-- Tampilan untuk Guru -->
+        <div id="guru-view">
+            <div class="content-wrapper">
+                <div class="qr-section">
+                    <div class="control-group">
+                        <label for="pilih-minggu">Pilih Sesi Absensi:</label>
+                        <select id="pilih-minggu">
+                            <option value="">-- Pilih Minggu --</option>
+                            <option value="1">Minggu ke-1</option>
+                            <option value="2">Minggu ke-2</option>
+                            <option value="3">Minggu ke-3</option>
+                            <option value="4">Minggu ke-4</option>
+                        </select>
+                    </div>
+                    <div id="qrcode-container">
+                        <div id="qrcode-placeholder">
+                            <p>QR Code akan muncul di sini.</p>
+                        </div>
+                        <div id="qrcode"></div>
+                    </div>
+                </div>
+                <div class="info-section">
+                     <h2>Data Absensi Real-time</h2>
+                     <div class="table-controls">
+                         <button id="refresh-data">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
+                                 <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                 <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                             </svg>
+                             Refresh Data
+                         </button>
+                         <div id="loading-spinner" style="display: none;"></div>
+                     </div>
+                     <div class="table-container">
+                         <table id="tabel-absensi">
+                             <thead>
+                                 <tr>
+                                     <th>Waktu</th>
+                                     <th>Nama Siswa</th>
+                                     <th>Kelas</th>
+                                     <th>Minggu</th>
+                                 </tr>
+                             </thead>
+                             <tbody>
+                                 <!-- Data absensi dari Google Sheet akan dimuat di sini -->
+                             </tbody>
+                         </table>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tampilan untuk Siswa -->
+        <div id="siswa-view" style="display:none;">
+            <h1>Absensi Siswa - Minggu ke-<span id="minggu-ke"></span></h1>
+            
+            <div class="control-group">
+                <label for="pilih-nama">Pilih Nama Anda:</label>
+                <select id="pilih-nama">
+                    <option value="">-- Pilih Nama --</option>
+                </select>
+            </div>
+
+            <button id="tombol-hadir">KONFIRMASI KEHADIRAN</button>
+
+            <p id="pesan" style="display: none;"></p>
+            <div id="fun-fact-container" class="gemini-result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Library untuk QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- THEME SWITCHER LOGIC ---
+            const themeToggle = document.getElementById('checkbox');
+            const body = document.body;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    body.classList.add('dark-mode');
+                    themeToggle.checked = true;
+                } else {
+                    body.classList.remove('dark-mode');
+                    themeToggle.checked = false;
+                }
+            };
+
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    localStorage.setItem('theme', 'dark');
+                    applyTheme('dark');
+                } else {
+                    localStorage.setItem('theme', 'light');
+                    applyTheme('light');
+                }
+            });
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (prefersDark) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+
+            // --- URL SUDAH TERHUBUNG KE GOOGLE SHEET ---
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAvghFvUJDfjdqTtZg7-9HyFeXDtS28koVofBwpWstdkgnPxHe_2DcIXwUTYXpT-Jn/exec'; 
+
+            // --- DATABASE SISWA ---
+            const siswaKelompok1 = [
+                { nama: 'Justin Justicio Mongdong', kelas: 'XI-1' }, { nama: 'Andhika Putra', kelas: 'XI-1' }, { nama: 'ASTITI SUGIHARTI', kelas: 'XII-1' }, { nama: 'DANA SATRIA', kelas: 'XI-4' }, { nama: 'Dhivo Satria Fradiansyah', kelas: 'XI-2' }, { nama: 'Levina Kesiah Anastasia', kelas: 'XII-1' }, { nama: 'Indah Rachel Manullang', kelas: 'XII-1' }, { nama: 'Ari Dwi Saputro', kelas: 'XII-2' }, { nama: 'Stefani kristin', kelas: 'XII-1' }, { nama: 'ISNAINI RIYANTI', kelas: 'XII-1' }, { nama: 'DJOHAN NOER HUDHA', kelas: 'XI-3' }, { nama: 'M.Wandanov Tambun Bungai', kelas: 'XI-3' }, { nama: 'Fahruzzaini fahri', kelas: 'XII-5' }, { nama: 'MUHAMAD GHATTA', kelas: 'XII-2' }, { nama: 'ZEFANYA FUTRI VANESA', kelas: 'XII-1' }, { nama: 'KRISTINA SINTANI', kelas: 'XII-1' }, { nama: 'RAHEL DASTIANO SIREGAR', kelas: 'XI-2' }, { nama: 'RAGIL KRIDO LAKSONO', kelas: 'XI-3' }, { nama: 'AHMAD ZUBAIDI', kelas: 'XII-5' }, { nama: 'DAVIN LUTVIAN ANGGARA', kelas: 'XI-3' }, { nama: 'Ni Kadek Riska Pebriyani', kelas: 'XI-1' }, { nama: 'Nadiya Sofwa', kelas: 'XI-3' }, { nama: 'MIKO JULIADI RAHMAD', kelas: 'XII-2' }, { nama: 'MIKA JULIADI RAHMAN', kelas: 'XII-3' }, { nama: 'RIYA', kelas: 'XII-5' }, { nama: 'Muhammad Kala Abizar', kelas: 'XII-2' }, { nama: 'VALENTINO SATRIA ANANTA', kelas: 'XII-5' }, { nama: 'ISNAINI RIYANTI', kelas: 'XII-1' }, { nama: 'Farhan Eka Saputra', kelas: 'XII-1' }
+            ];
+            const siswaKelompok2 = [
+                { nama: 'RIZKY PUTRA PRATAMA', kelas: 'XI-5' }, { nama: 'Murfid Adriansyah', kelas: 'XI-5' }, { nama: 'Frensiska oktavia', kelas: 'XI-5' }, { nama: 'DJOHAN NOER HUDHA', kelas: 'XI-3' }, { nama: 'Firman Adi Pratama', kelas: 'X-7' }, { nama: 'DIMAS ARDIANSYAH', kelas: 'X-7' }, { nama: 'NIA TRIANINGSIH', kelas: 'XI-5' }, { nama: 'Indri', kelas: 'X-4' }, { nama: 'Retno febriyana putri', kelas: 'X-3' }, { nama: 'Dwi Oktavia Puspitasari', kelas: 'X-3' }, { nama: 'M. CHARIS FADLIH', kelas: 'XI-6' }, { nama: 'M. Sugeng Riadin', kelas: 'X-?' }, { nama: 'RANGGA SATIYANDA SYAHPUTRA', kelas: 'XI-5' }, { nama: 'Naiara Putri Yuanita Imup', kelas: 'X-?' }, { nama: 'Rafael Ady Sera', kelas: 'X-?' }, { nama: 'Zulfa Asna lailia Rahmah', kelas: 'X-3' }, { nama: 'Fiyer Barka Damirianto', kelas: 'X-3' }, { nama: 'Nadia nur hijurotul kaffah', kelas: 'X-3' }, { nama: 'FAKHRI MAHENDRA WIBAWA', kelas: 'X-4' }, { nama: 'Christian nathanael mahardika', kelas: 'X-4' }, { nama: 'CRYSTAL ANABELLA RAMADANI', kelas: 'X-6' }, { nama: 'HAFIDZ KHOIRUL HUDA', kelas: 'X-1' }, { nama: 'Intan Dewi Puspita Sari', kelas: 'X-3' }, { nama: 'RANGGA SATIYANDA SYAHPUTRA', kelas: 'XI-5' }, { nama: 'Dhesta Maulana Putra', kelas: 'XI-5' }, { nama: 'Arya Apriananda Putra', kelas: 'XI-5' }, { nama: 'Damar Aditya Fandi', kelas: 'XI-7' }, { nama: 'ARYFA PUTRI MAHARANI', kelas: 'XI-4' }, { nama: 'Andre arsyafin setiawan', kelas: 'XI-4' }
+            ];
+            
+            const guruView = document.getElementById('guru-view');
+            const siswaView = document.getElementById('siswa-view');
+            const pilihMinggu = document.getElementById('pilih-minggu');
+            const qrcodeContainer = document.getElementById('qrcode');
+            const qrcodePlaceholder = document.getElementById('qrcode-placeholder');
+            const mingguKeSpan = document.getElementById('minggu-ke');
+            const pilihNama = document.getElementById('pilih-nama');
+            const tombolHadir = document.getElementById('tombol-hadir');
+            const pesanEl = document.getElementById('pesan');
+            const funFactContainer = document.getElementById('fun-fact-container');
+            const STORAGE_KEY = 'absensiEkskulData';
+            let qrCodeInstance = null;
+
+            // NEW ELEMENTS FOR DATA DISPLAY
+            const refreshButton = document.getElementById('refresh-data');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const tabelAbsensiBody = document.querySelector('#tabel-absensi tbody');
+
+            // --- NEW FUNCTION TO FETCH AND DISPLAY DATA ---
+            const fetchAndDisplayAttendance = async () => {
+                loadingSpinner.style.display = 'block';
+                tabelAbsensiBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr>';
+
+                try {
+                    const response = await fetch(SCRIPT_URL);
+                    if (!response.ok) {
+                        throw new Error('Gagal mengambil data dari server.');
+                    }
+                    const data = await response.json();
+
+                    tabelAbsensiBody.innerHTML = ''; // Kosongkan tabel sebelum diisi
+                    if (data.length === 0) {
+                        tabelAbsensiBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi.</td></tr>';
+                    } else {
+                        data.forEach(absen => {
+                            const row = document.createElement('tr');
+                            // Nama kolom disesuaikan dengan header di Google Sheet
+                            row.innerHTML = `
+                                <td>${absen['Timestamp'] || '-'}</td>
+                                <td>${absen['Nama_Siswa'] || '-'}</td>
+                                <td>${absen['Kelas'] || '-'}</td>
+                                <td>${absen['Minggu_Ke'] || '-'}</td>
+                            `;
+                            tabelAbsensiBody.appendChild(row);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching attendance:', error);
+                    tabelAbsensiBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #dc3545;">Terjadi kesalahan saat memuat data.</td></tr>`;
+                } finally {
+                    loadingSpinner.style.display = 'none';
+                }
+            };
+            
+            async function callGeminiAPI(prompt) {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Tidak bisa mendapatkan fakta menarik saat ini.";
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    return "Maaf, terjadi kesalahan saat menghubungi AI.";
+                }
+            }
+            
+            const getAbsensiData = () => JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const saveAbsensiData = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            
+            const generateQRCode = (minggu) => {
+                qrcodeContainer.innerHTML = '';
+                qrcodePlaceholder.style.display = 'none';
+                const url = `${window.location.href.split('?')[0]}?page=absen&minggu=${minggu}`;
+                qrCodeInstance = new QRCode(qrcodeContainer, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+            };
+            
+            const params = new URLSearchParams(window.location.search);
+            const page = params.get('page');
+            const minggu = params.get('minggu');
+
+            if (page === 'absen' && minggu) {
+                guruView.style.display = 'none';
+                siswaView.style.display = 'block';
+                mingguKeSpan.textContent = minggu;
+                const kelompokSiswa = (minggu === '1' || minggu === '3') ? siswaKelompok1 : siswaKelompok2;
+                kelompokSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
+                pilihNama.innerHTML = '<option value="">-- Pilih Nama --</option>';
+                kelompokSiswa.forEach(siswa => {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify(siswa);
+                    option.textContent = `${siswa.nama} (${siswa.kelas})`;
+                    pilihNama.appendChild(option);
+                });
+            } else {
+                guruView.style.display = 'block';
+                siswaView.style.display = 'none';
+                // Automatically load data for teacher view
+                fetchAndDisplayAttendance();
+            }
+
+            pilihMinggu.addEventListener('change', () => {
+                const mingguTerpilih = pilihMinggu.value;
+                if (mingguTerpilih) generateQRCode(mingguTerpilih);
+                else {
+                    qrcodeContainer.innerHTML = '';
+                    qrcodePlaceholder.style.display = 'block';
+                }
+            });
+            
+            // Add event listener for the refresh button
+            refreshButton.addEventListener('click', fetchAndDisplayAttendance);
+
+            tombolHadir.addEventListener('click', async () => {
+                const siswaTerpilihJSON = pilihNama.value;
+                if (!siswaTerpilihJSON) {
+                    pesanEl.textContent = 'Silakan pilih nama Anda terlebih dahulu.';
+                    pesanEl.className = 'pesan-error';
+                    pesanEl.style.display = 'block';
+                    return;
+                }
+                
+                const siswaTerpilih = JSON.parse(siswaTerpilihJSON);
+                const dataAbsensiLokal = getAbsensiData();
+
+                const sudahAbsen = dataAbsensiLokal.some(item => item.nama === siswaTerpilih.nama && item.minggu.toString() === minggu);
+
+                pesanEl.className = '';
+                if (sudahAbsen) {
+                    pesanEl.textContent = 'Anda sudah melakukan absensi untuk minggu ini.';
+                    pesanEl.classList.add('pesan-error');
+                    pesanEl.style.display = 'block';
+                    return;
+                }
+                
+                tombolHadir.disabled = true;
+                pesanEl.textContent = 'Mengirim data absensi...';
+                pesanEl.style.display = 'block';
+                pesanEl.className = '';
+
+                const dataBaru = {
+                    nama: siswaTerpilih.nama,
+                    kelas: siswaTerpilih.kelas,
+                    minggu: parseInt(minggu)
+                };
+
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(dataBaru),
+                    });
+                    
+                    pesanEl.textContent = 'Absensi berhasil! Data Anda telah terekam.';
+                    pesanEl.classList.add('pesan-sukses');
+                    pilihNama.disabled = true;
+                    
+                    const updatedAbsensi = [...dataAbsensiLokal, dataBaru];
+                    saveAbsensiData(updatedAbsensi);
+                    
+                    funFactContainer.style.display = 'block';
+                    funFactContainer.textContent = 'Mencari fakta menarik... ✨';
+                    const funFact = await callGeminiAPI("Berikan satu fakta menarik dan singkat (fun fact) tentang manfaat kegiatan ekstrakurikuler bagi siswa.");
+                    funFactContainer.innerHTML = `<strong>Fakta Menarik:</strong> ${funFact}`;
+
+                } catch (error) {
+                    console.error('Error sending data to Google Sheet:', error);
+                    pesanEl.textContent = 'Gagal mengirim data. Periksa koneksi internet Anda dan coba lagi.';
+                    pesanEl.classList.add('pesan-error');
+                    tombolHadir.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
