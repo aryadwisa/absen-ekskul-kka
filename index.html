@@ -105,6 +105,13 @@
             margin-bottom: 25px;
             font-weight: 700;
         }
+        
+        h3 {
+             color: var(--text-secondary);
+             margin-bottom: 15px;
+             font-size: 1.1rem;
+             font-weight: 600;
+        }
 
         .control-group {
             margin-bottom: 25px;
@@ -342,6 +349,45 @@
             margin: auto;
         }
 
+        /* --- STYLES FOR NEW ABSENT LIST FEATURE --- */
+        #absent-list-container {
+            background-color: var(--bg-color);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: 25px; /* Spacing from QR code */
+            animation: fadeIn 0.5s;
+        }
+        #absent-list {
+            list-style-type: none;
+            padding-left: 0;
+            max-height: 250px; /* Batasi tinggi agar tidak terlalu panjang */
+            overflow-y: auto;
+        }
+        #absent-list li {
+            padding: 10px 5px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+        #absent-list li:last-child {
+            border-bottom: none;
+        }
+        /* Custom scrollbar for absent list */
+        #absent-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #absent-list::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        #absent-list::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        #absent-list::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+
     </style>
 </head>
 <body>
@@ -379,13 +425,12 @@
                         </div>
                         <div id="qrcode"></div>
                     </div>
-                    <div class="control-group" style="margin-top: 20px;">
-                        <button id="generate-pdf-button">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down-fill" viewBox="0 0 16 16">
-                                 <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zm-1 4v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 11.293V7.5a.5.5 0 0 1 1 0z"/>
-                             </svg>
-                             <span>Jadikan Laporan PDF</span>
-                        </button>
+                    <!-- FITUR BARU: DAFTAR SISWA BELUM HADIR -->
+                    <div id="absent-list-container" style="display: none;">
+                        <h3>Siswa Belum Hadir</h3>
+                        <ul id="absent-list">
+                            <!-- Nama akan diisi oleh JavaScript -->
+                        </ul>
                     </div>
                 </div>
                 <div class="info-section">
@@ -447,13 +492,14 @@
         </div>
     </div>
 
+    <!-- Efek Suara untuk Absensi Berhasil -->
+    <audio id="success-sound" preload="auto">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI V1NPeAAAAAnimChF/oCo/GRAuCoaQkAYk9b25u+n62v/8yAAAAIGNvbW1lbnQAAAAgZW5jb2RlZCBieSBzb3VuZGNvbnZlcnRlci5jb20ATWVkaWEgSW5mbwAAAAALAAADCwAAA+gFAAAAAAAAP/AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAD/AAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAA////+MYxBAEAAAAIAAANIAAAAQVJERkMAAAAHAAAD+gMAAAAAQUxCTQAAAAcAAAMLAwAAAAFQSUNUAAAABAAADqgFAAAAAAAAP/AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAAAA/gAAAAAAAP8AAAAAAD/AAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAAAAAD/AAAAAAAAAP4AAAA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/7//l/6R8GEP/nwv/9//D/6R8GEP/ow//f//Z/6R8GEP/kQr/1/+v/6R8GEP/hw//1/+j/6R8GEP/iM//5//x/6R8GEP/jQ//5//D/6R8GEP/iMr/x/+H/6R8GEP/hMr/7/9D/6R8GEP/kQ//5//X/6R8GEP/kMr/5/+H/6R8GEP/iEr/5/+j/6R8GEP/hEr/1//Z/6R8GEP/hI//x//d/6R8GEP/jwv/x//l/6R8GEP/nwv/x/+H/6R8GEP/nwv/x//d/6R8GEP/iQ//d//j/6R8GEP/hgr/d/+j/6R8GEP/gw//1/+T/6R8GEP/gw//1//Z/6R8GEP/hw//1//l/6R8GEP/hQr/d/+f/6R8GEP/gQ//d/+f/6R8GEP/gAv/5/+v/6R8GEP/gAv/5//j/6R8GEP/ggr/5//H/6R8GEP/fg//d/+f/6R8GEP/fQ//d/+H/6R8GEP/eg//d/+T/6R8GEP/eg//x//j/6R8GEP/eg//x//Z/6R8GEP/ew//x/+T/6R8GEP/eg//5/+j/6R8GEP/eg//1//T/6R8GEP/eg//5//l/6R8GEP/ew//1/+j/6R8GEP/ew//1/+H/6R8GEP/fQ//x/+j/6R8GEP/gQ//1/+j/6R8GEP/gQ//5/+T/6R8GEP/gw//x//T/6R8GEP/iQ//5//H/6R8GEP/iQ//1//T/6R8GEP/hQ//d//l/6R8GEP/fgr/d/+v/6R8GEP/eQr/1//H/6R8GEP/dgr/d/+T/6R8GEP/cwr/d/+v/6R8GEP/bQ//d/+T/6R8GEP/bQ//d/+f/6R8GEP/awr/d/+f/6R8GEP/awr/1/+H/6R8GEP/aw//d/+j/6R8GEP/agr/d/+j/6R8GEP/bQ//d/+f/6R8GEP/cAv/d/+j/6R8GEP/cQ//d/+j/6R8GEP/cw//d/+f/6R8GEP/dQ//d/+H/6R8GEP/dQ//d//T/6R8GEP/dwr/d//l/6R8GEP/dwr/d/+j/6R8GEP/dwr/x/+f/6R8GEP/dwr/x/+j/6R8GEP/eA//x/+j/6R8GEP/egr/1//j/6R8GEP/egr/1/+H/6R8GEP/ew//1/+H/6R8GEP/fA//1/+j/6R8GEP/fA//1//Z/6R8GEP/fg//d//v/6R8GEP/fgr/1//j/6R8GEP/gg//d//v/6R8GEP/ggr/1//H/6R8GEP/hA//d//T/6R8GEP/hA//d//l/6R8GEP/ggr/1//T/6R8GEP/gg//1/+H/6R8GEP/gg//5/+j/6R8GEP/gw//1/+H/6R8GEP/gw//x//l/6R8GEP/gw//x//l/6R8GEP/hg//1//H/6R8GEP/hg//1/+j/6R8GEP/hg//d/+H/6R8GEP/gw//d/+T/6R8GEP/gw//d//l/6R8GEP/gg//d//T/6R8GEP/ggr/d//v/6R8GEP/gAv/d/+H/6R8GEP/fgr/d//l/6R8GEP/fgr/d/+H/6R8GEP/fA//1//j/6R8GEP/fA//d//T/6R8GEP/fA//d//T/6R8GEP/fA//d//T/6R8GEP/ew//d//l/6R8GEP/fAv/d/+H/6R8GEP/eg//d/+H/6R8GEP/eA//x/+H/6R8GEP/dQ//1/+j/6R8GEP/dgr/d//T/6R8GEP/dgr/d//l/6R8GEP/dQr/x/+H/6R8GEP/cgr/x/+H/6R8GEP/cgr/d/+j/6R8GEP/cgr/1/+H/6R8GEP/cgr/x/+T/6R8GEP/cgr/d/+j/6R8GEP/cQr/d/+j/6R8GEP/cwr/d//T/6R8GEP/cwr/d//v/6R8GEP/cw//d/+T/6R8GEP/dQ//d/+H/6R8GEP/dgr/d/+j/6R8GEP/dgr/1/+j/6R8GEP/dgr/1//v/6R8GEP/dgr/d/+j/6R8GEP/dgr/d/+f/6R8GEP/dgr/x/+H/6R8GEP/dwr/d/+H/6R8GEP/dwr/d/+j/6R8GEP/dwr/x/+T/6R8GEP/eAr/x/+H/6R8GEP/eAr/d/+H/6R8GEP/eAr/x/+j/6R8GEP/eAv/d/+f/6R8GEP/eAv/d/+H/6R8GEP/eAv/d/+H/6R8GEP/egr/d/+j/6R8GEP/egr/1/+H/6R8GEP/egr/x/+T/6R8GEP/ewr/x/+j/6R8GEP/ewr/d/+j/6R8GEP/ew//d/+f/6R8GEP/fAr/d/+H/6R8GEP/fAr/1/+H/6R8GEP/fAv/x/+j/6R8GEP/fQ//1/+j/6R8GEP/fQ//d/+H/6R8GEP/fg//d/+j/6R8GEP/gA//d/+j/6R8GEP/gAv/1/+H/6R8GEP/gAv/1/+j/6R8GEP/gA//1/+j/6R8GEP/gAv/x/+H/6R8GEP/gQr/x/+H/6R8GEP/ggr/x/+j/6R8GEP/ggr/d/+T/6R8GEP/ggr/d/+T/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+H/6R8GEP/ggv/d/+j/6R8GEP/ggv/x/+j/6R8GEP/ggv/x/+j/6R8GEP/ggv/d/+j/6R8GEP/ggv/x/+H/6R8GEP/gwr/1/+j/6R8GEP/gwr/1/+T/6R8GEP/gwr/x/+f/6R8GEP/gwv/x/+j/6R8GEP/gwr/d/+T/6R8GEP/gwr/x/+T/6R8GEP/hAr/d/+T/6R8GEP/hAr/d/+j/6R8GEP/hAr/x/+f/6R8GEP/hAv/x/+j/6R8GEP/hAv/d/+T/6R8GEP/hgv/d/+f/6R8GEP/hgv/d/+j/6R8GEP/hgv/d/+T/6R8GEP/gwr/d/+f/6R8GEP/ggr/d/+H/6R8GEP/ggr/d/+T/6R8GEP/ggr/d/+j/6R8GEP/ggv/d/+j/6R8GEP/gwr/x/+T/6R8GEP/gwr/d/+T/6R8GEP/ggv/d/+H/6R8GEP/ggv/d/+H/6R8GEP/ggv/d/+H/6R8GEP/ggr/d/+T/6R8GEP/ggr/d/+T/6R8GEP/ggr/d/+T/6R8GEP/gQr/d/+f/6R8GEP/ggr/d/+H/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+j/6R8GEP/ggv/d/+j/6R8GEP/gwr/x/+T/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+T/6R8GEP/ggv/x/+T/6R8GEP/ggr/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+T/6R8GEP/ggr/x/+T/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+H/6R8GEP/ggv/x/+j/6R8GEP/ggr/d/+f/6R8GEP/ggr/x/+j/6R8GEP/ggv/d/+j/6R8GEP/ggr/d/+T/6R8GEP/gQr/d/+f/6R8GEP/gQr/d/+j/6R8GEP/gwr/d/+j/6R8GEP/ggr/d/+j/6R8GEP/gwr/x/+T/6R8GEP/gwr/x/+T/6R8GEP/ggr/d/+j/6R8GEP/ggr/d/+T/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+T/6R8GEP/ggv/x/+T/6R8GEP/ggv/d/+T/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+j/6R8GEP/ggr/x/+T/6R8GEP/ggv/x/+T/6R8GEP/ggv/d/+T/6R8GEP/ggr/x/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggv/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/x/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggv/d/+f/6R8GEP/ggr/d/+f/6R8GEP/ggv/d/+f/6//5//j/+X/+//+z//f/+7/+f/+v//D/+H/+P/9j//f/9n//H//v//v//P/9n/9v/6//0f/x//r//Z//7//f/9//2//r/+//+P/9n//v//v/+v/9j/+7//H//X//X/9b/+7/+//9n//v/9//9v/+//9n/+//9//9b/9b/+j/+f//v/+v/9j//H/+P/9HwYQ//rU//Z//f/8n/7v/8f/p//x/+f/+H/+z//d//b//H/9j/7v//j/9L/+z/+H/+v//f/+7/9j//f//v//9v/+f/+v//D//f//P/9j//f/9b/+7/+v//H/9L/+v/9H//f//f/+//+//9b/+H/9v/+H/9j//H/+v//H/+T/+7/9n/+//+P/8v/8f/x//v/+//+T//f//v//P//L/+H/+H//P/83/9v/9b/+v//P//L/+H/9v/+//+//7P/+//8f/+//+v/+n/9b//d//R//j//H//v/+f/+P/+//8n/+X/+//8f/8n/+//+H/+v/8n/+v/9j/9v/+//+n//R//D/+H//v//t//t/+j/+//8n//H/+//+H//D//H//v//v/+H//D/+P/9v//R/+j/+z//H//X/+v//H/9j/+//9L//H/+v/+z//v//f/+v/9b//d//d/+H//H/9L//d/+v/9n/+7//H//X/+//9//+//+//9//+v//D//X/+v/9L//H/9j//D/+H//v//H/+P/+H/+f/9j//H/9j/+//9H/9b/+f/+j//d//d/+v//D//X/+v//H/+v//H/+v/+H/+z/+H/+z/+H/9v/9n//d//H/8v/9j/+//9b/9b//d//X//R//d/+H/9j//f/9j//H//H/+7//f/+//9n/+P/+P/+v/9b/9v/9b/+H/9j/+//+//8n/+H/83/+7//X//d//d/+//9n//H//H//v//H/9v/+z/+v//H/+H/9j/+f/+//9H//L/+//+//+H//d/+j/+//+//+//9v/9v/9L/+//9b/9j/+//9b//f//L//H/+P/8v//H/+H//f//d/+H/9HwYQ/91K/9j//P/+T/+v/9j/9b/+z/+z/+//+//9v/9v/+P/+v/+v/+j/+f/+7/8v/+f/+7/8v/9b/+v/9H/9j//P/+//+//9b/+7/9j/+v//D//H//d//H//f/9b/9v//d//Z//7//Z/+//+P/8f/x//r//v/+P/+z//X/9v/+v/9j/+//9v/8v/9HwYQ/+vav/l/+v//D/9b/+v//D//v//d//Z/+v/8f/9b/7r/+n//R//P/+v/+v//H/8v/+v/+z/+H//f/9v//P/+//9H/+//9H//H/+7/9b//v//v/+H/+v/9n/+v/+P/+v/9H/+H/9j//f/9n/+H//H/+z/+z/+//9b//f/+//9L//L//d/+7/9v/+f/+7/9j//v//f//X//R/+z/9j//H/+P/8n//f//H/9L/9H/+//9j/+//8v/8n//f//f/9b/+7/8n//L//v//P/+f/9v//f/9b/9L//f//Z/+//+z//f//d//Z/+z//v/+v/9H//f/9v/8n//L/+v/+//9b/9n/+7/+f//f//P/+//+P/9L/+H//v//t//l//H/9j/8v/+z/+v//R//j/+H/9L//v//v//Z/+//+H//v//d//f//Z//H//Z/+f/+//9L//H//P/9v//v//R//v/+//+T//f//j//L//d//H//f/+z/+f/+j/+f//v//v/9//9v/9v//f/9L//H/9j//R//H//P/+H//f//f/+//+//+f/+f/+f/+f/+7/+//9H//v//f//v//P/+H/9n//v//f/9n/+//+7//f//f/+H/+z/9v/+7//H//L//v/9b//d//f//d//H/+z/+H/9n/+z/+z/+z/+//+//9L/9j//v//f/+//+P//P/+P//f/+//+v/+7/8f/9b/+v/+P//d//Z/+//9b/9v/9v//f//d/+f//f/9L/9L//v//v//H/9b//f/+z/+P/+//83/9v//f/8v/9H//v/+v//d//Z//v//R/9b//R//P/+v/9v//v//H//d/+7//v/+f//L/+z//d//Z/+f/+f//L/+z//L/9j/+f/+z//H/+//+P/9L/9L//d/8v//H//R/9b//v/9L/+z/+z//H//f/9j//d//H//d/+z/+7//L//L//d/+z//v//H//v//v/+z//d/+f/+z/+P//d/+//9b/+z/+z/9L/+//+//9b/+H/+H//v/9b//d//v//f//d//v//H/+z//d//d/+z//d//P//f/9b//f/9j//d//R//v//H//v//v/+7//d//H//d//d/+f//d//H//H//v//v//H/9b/+H//H//v//f/83//f/9L//H//H//H//v//d//H//H//d/+7//H//d//H//v//H//d//H//d//d//f//H//f//H//H//d//H//H//d//d//H//d//d//H//d//H//d//d//H//d//d//H//d//d//H//d//H//d//H//d//H//H//d//d//H//H//d//H//H//d//H//H//d//d//H//H//d//H//H//d//H//H//d//d//H//H//H//H//d//d//H//d//H//d//H//H//d//H//d//d//H//H//d//H//H//H//d//H//H//H//d//H//d//d//H//H//H//H//H//H//H//H//H//d//d//H//H//H//d//H//d//H//H//d//H//H//H//d//d//H//d//H//H//H//d//H//H//H//H//H//H//H//d//H//H//H//H//d//H//H//H//d//H//H//H//d//H//H//H//H//H//H//H//H//d//H//H//H//H//d//H//d//H//H//d//H//H//H//H//d//H//H//H//H//d//H//H//H//H//H//d//H//H//d//d//H//d//d//H//d//H//H//H//d//d//H//H//H//H//H//d//H//d//H//d//d//H//d//d//H//d//H//d//H//H//d//d//H//d//d//H//H//H//d//H//d//H//d//H//d//H//d//H//H//d//H//d//H//d//H//H//H//H//H//H//H//d//d//H//H//H//H//d//d//H//d//H//d//H//H//H//H//H//d//H//H//H//d//H//d//H//H//H//H//H//H//d//H//H//H//d//H//H//H//d//H//H//H//d//H//H//H//d//d//d//H//d//H//H//d//d//H//d//H//d//d//H//d//d//H//d//H//d//d//H//d//d//H//d//d//H//H//H//d//d//d//H//H//d//H//d//d//H//H//H//d//d//d//d//H//H//d//d//d//d//d//H//d//d//H//H//d//H//d//d//d//d//H//d//d//d//H//d//H//d//d//H//d//d//d//d//H//d//d//H//d//d//d//d//d//H//d//H//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//H//d//d//H//d//d//H//d//d//H//d//d//d//d//d//H//H//d//d//d//H//d//d//H//d//H//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//d//H//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//H//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//H//d//d//d//d//H//d//H//H//H//H//d//H//H//H//H//H//H//H//H//H//H//H//H//H//H//d//H//H//H//H//H//H//d//H//H//d//H//d//H//H//d//H//d//H//d//H//d//d//d//d//H//d//H//d//H//H//H//H//H//H//d//H//H//H//H//H//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d-H//d//H//d//d//d//d//d//d//d//d//H//H//H//d//H//d//d//d//d//d//d//H//H//d//H//H//d//d//d//H//H//H//d//d//d//H//H//H//d//H//H//H//d//d//H//d//d//d//d//H//H//d//d//d//H//H//d//H//d//H//d//d//H//H//d//H//H//d//d//d//d//H//d//d//d//H//d//H//H//d//d//d//d//H//d//d//d//d//H//d//d//H//d//d//d//d//H//d//d//d//d//H//H//d//d//H//d//d//d//d//d//H//d//d//d//H//d//H//d//d//H//d//d//H//d//d//H//H//d//d//d//d//H//d//d//d//d//H//d//d//H//d//H//d//d//d//H//d//d//d//H//H//d//d//d//H//d//d-H//H//H//d//d//d//H//d//H//d//H//d//d//d//H//d//d//d//d//H//d//d//d//H//d//d//d//d//d//d//d//d//H//d//d//H//d//H//H//H//d//H//d//d//H//H//d//d//H//H//d//d//H//d//d//H//d//d//d//H//H//d//d//H//H//d//d//d//H//H//d//d//H//H//d//d//d//d//H//H//d//d//d//H//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//H//d//d//d//H//d//d//d//d//d//d//d//H//H//d//d//H//d//d//H//d//H//H//H//d//d//d//d//H//d//d//H//H//d//d//H//d//d//d//d//d//d//H//d//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//H//d//H//d//d//d//H//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//H//d//d//d//d//H//d//d//d-H//H//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d-H//d//H//H//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//d//d//d//H//H//H//d//d//d//d//d//d//d//d//H//H//H//d//d//d//d//d//d//H//d//H//d//H//H//d//d//d//d//d//d//d-H//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//H//d//d//H//H//d//d//d//d//d//H//d//d//d//d//d//H//H//d//d//d//d//d//d//d//d//d//d//H//d//H//H//d//d//d//H//d//d//d//d//d//H//H//d//d//d//d//d//d//d-H//d//d//d//H//d//d//d//d//d//d//d//H//d//d//H//d//d//d//H//H//d//d//d//d//H//d//H//H//d//H//H//d//d//d//d//H//d//H//H//d//H//H//d//d//d//d//H//d//d//H//d//d//d//d//H//d//H//d//H//H//d//H//d//H//d//d//d//H//d//H//d//H//d//H//d//d//H//d//d//d//H//d//d//d//d//H//d//d//H//d//H//H//d//d//H//d//H//d//d//d//d//d//d//d//H//d//d//d//H//d//H//d//H//d//H//d//d//d//d//H//d//H//d//H//d//d//d//d//H//d//H//d//H//d//H//d//d//H//d//d//d//d//H//H//d//H//d//d//d//d//H//d//H//d//H//d//H//d//d//H//d//d//d//H//d//H//d//H//H//d//H//H//d//d//d//d//H//d//H//d//H//d//H//d//H//d//H//d//d//d//H//d//H//d//H//d//H//d//d//d//H//H//d//d-H//H//d//d//d//H//d//H//H//d//H//d//d//H//d//H//H//d//H//d//d//d//H//H//d//d//d//d//H//d//H//H//d//d//H//d//d-H//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//H//H//H//d//d//d//d//H//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//H//d//H//d//d//d//d//H//d//H//H//d//H//d//d//d//d//d//d//d//H//d//d//H//d//d//d//H//d//d//d//d//H//d//H//d//d//d//d//d//d//H//d//H//d//d//d//H//d//d//d//d//H//d//d//d//H//H//d//H//H//d//d//d//d//H//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//d//H//H//d//d//d//d//d//d//d//H//H//d//d//d//d//H//d//d//d//d//H//d//d//d//H//d//d//d//d//H//H//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//d//d//d//d//d//d//H//H//H//d//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d-H//d//H//H//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//H//d//d//d//H//d//H//d//d//H//d//d//d//d//H//H//d//d//d//H//d//H//d//H//d//H//d//d//d//H//d//d//d//H//d//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//H//d//H//d//d//H//d//d//d//d//H//d//d//d//d//H//d//d//H//d//d-H//H//d//d//d//d//H//d//d//d//d//d//d//H//d//d//H//d//H//d//d//d//d//H//d//H//d//d//H//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//d-H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//d//H//d//H//d//d//d//H//d//d//d//H//d//d//d//H//H//d//d//d//d//H//d//H//d//H//d//H//d//d//d//H//H//d//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//H//d//d//H//d//H//d//d//d//d//H//H//d//d//d//H//d//d//H//d//d//d//d//H//H//d//d//d//H//d//d//d//d//d-H//d//d//d//d//d//H//d//d-H//H//d//d//d//d//d//d//d//H//H//H//d//d//d//d//H//d//d//d//d//H//d//d//H//d//H//d//H//d//H//d//d//d//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d//H//H//d//d//d//d//d//H//d//d//H//d//d//H//d//H//H//d//d//d//d//H//H//d//H//d//d//H//d//H//d//H//d//d//d//H//d//H//H//d//H//d//d//d//d//H//d//d//d//H//d//d//d//d//d//d-H//H//H//d//d//H//d//H//d//H//d//d//d//d//H//d//H//d//d//d//H//d//H//d//d//d//H//d//d//H//d//d//d//d//H//d//H//d//H//d//H//d//H//d//d//H//d//H//d//H//d//d//d//d-H//d//d//d//d//d//d//H//d//H//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//H//d//H//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//H//H//d//d//d//d//d//d//H//d//d//d//H//d//d//d//H//H//d//H//d//d//d//d//d//d-H//d//d//d//d//H//d//H//H//d//d//d//d-H//d//d//H//d//d//H//d//d//d//H//H//d//d//d//d//d//d//d//d//d//d//H//d//H//d//H//d//d//d//d//d//H//d//d//d//H//d//H//H//d//d//H//d//d-H//d//H//d//H//d//H//d//d//d//d//d//d//d//H//d//d//d//d//H//H//d//H//d//H//d//d//H//d//d//d//d-H//H//d//d//d//d//d-H//d//d//d//d//d//d//d//H//H//d//d//d//d//H//d//H//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//H//H//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//H//H//d//d//H//d//d//d//d//d//d//H//d//H//d//H//d//d//d//H//d//d//H//d//d//d//H//H//d//d//H//d//H//d//d-H//H//H//d//d//d//H//d//d//d//d//H//d//H//H//d//d//H//d//d//d//d//d-H//d//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//H//d//d//d//H//d//H//d//d//d//H//d//d//d//H//d//H//d//H//d//d//d//H//d//d//d//d-H//d//d//d//d//d//d//d//d//d//H//H//d//d//d//d//d//d//d//d//H//H//d//d//d//d-H//H//d//d//H//d//H//d//d//H//H//d//d//H//d//d//H//d//H//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//H//H//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d-H//H//d//d-H//d//H//d//d//d//H//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//H//H//H//d//H//d//H//d//d//d//d//d//H//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//H//d//d//d//d//d//d//d//d//d//H//H//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d-H//d//d//d//d//d//H//d//d//d//d-H//d//d//d//d//d//d-H//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d-H//d//H//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//d//H//d//H//d//d//d//d//H//d//d//d//d//d//H//d//d-H//d//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//H//d//H//d//d//d//d//d//d-H//d//d//d//d//H//d//d//d//H//H//d//d//d//d//d//d//d//d//d//H//d//H//d//d//H//d//H//d//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//H//d//d//H//d//d//H//d//H//d//d//H//d//d//H//d//H//d//d//H//d//H//d//H//d//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d//d//d//d-H//H//d//d//d//d//H//d//d-H//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//H//d//H//d//d//d//d//d//H//d//d-H//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d-H//d//d-H//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d-H//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//H//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//H//d//d//H//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//H//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//H//d//d-H//H//d//d//d//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//d//d//d//H//d//H//d//d-H//d//d//d//H//d//d-H//d//d//d//d//d//H//d//d//d//d//H//d//d-H//d//H//d//d//H//d//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//H//d//d//d//H//d//d//d//d-H//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d-H//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//d//H//d//H//d//d//d//d//d//d//H//d//H//d//d//d//d//H//d//d//d//d//d//d//d//H//d//d//d//d//d//H//d//d-H//d//d-H//H//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//d//d//H//d//d//d//d//H//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d-H//H//d//d//H//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//d//H//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//H//d//d//d//d//d//H//d//d//H//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//H//d//d-H//d//d//d//d//H//d//d//H//d//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d-H//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//d//H//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//d//H//d//H//d//d//d//H//d//d//H//d//d//d//d//d//d//d//d//H//d//d-H//d//d-H//d//d//d//d//d//d//d//d//d//d//d-H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//H//d//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d//d//d//d//d//H//d//d//d//H//d//d//d//H//d//d//d//d//H//d//d//H//d//d//d//d//d//H//d//H//d//d//d//d//d//d//d//d//H//d//d//d//d//d//d//d//d//d//d-H//d//d//d//d//d-H" type="audio/mpeg">
+    </audio>
+
     <!-- Library untuk QR Code Generator -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-    <!-- Libraries untuk PDF Generator -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js" defer></script>
-
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -481,7 +527,6 @@
             const pesanEl = document.getElementById('pesan');
             let qrCodeInstance = null;
             
-            const pdfButton = document.getElementById('generate-pdf-button');
             const refreshButton = document.getElementById('refresh-data');
             const loadingSpinner = document.getElementById('loading-spinner');
             const tabelAbsensiBody = document.querySelector('#tabel-absensi tbody');
@@ -492,6 +537,10 @@
             const persentaseKehadiranEl = document.getElementById('persentase-kehadiran');
             const hadirDetailEl = document.getElementById('hadir-detail');
             const totalSiswaEl = document.getElementById('total-siswa');
+
+            // --- ELEMEN BARU UNTUK DAFTAR SISWA ALPA ---
+            const absentListContainer = document.getElementById('absent-list-container');
+            const absentList = document.getElementById('absent-list');
 
             let fullAttendanceData = [];
             let currentSort = { column: 'Timestamp', order: 'desc' };
@@ -525,6 +574,22 @@
                 updateSortIndicators();
             };
 
+            // --- FUNGSI BARU UNTUK MENAMPILKAN SISWA ALPA ---
+            const renderAbsentList = (absentSiswa) => {
+                absentList.innerHTML = ''; // Kosongkan daftar sebelumnya
+                if (absentSiswa.length === 0) {
+                    absentList.innerHTML = '<li>Semua siswa telah hadir.</li>';
+                } else {
+                    // Urutkan nama siswa alpa berdasarkan abjad
+                    absentSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
+                    absentSiswa.forEach(siswa => {
+                        const li = document.createElement('li');
+                        li.textContent = `${siswa.nama} (${siswa.kelas})`;
+                        absentList.appendChild(li);
+                    });
+                }
+            };
+
             const updateSortIndicators = () => {
                 tableHeaders.forEach(th => {
                     const column = th.dataset.column;
@@ -556,11 +621,19 @@
                         return itemDate && itemDate.getDate() === today.getDate() && itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear();
                     });
                     totalSiswaUntukPersen = totalSiswaCount; 
+                    absentListContainer.style.display = 'none'; // Sembunyikan daftar alpa jika tidak ada minggu dipilih
                 } else { 
                     processedData = processedData.filter(item => item['Minggu_Ke'] == selectedWeek);
                     const kelompokSiswaMingguIni = (selectedWeek === '1' || selectedWeek === '3') ? siswaKelompok1 : siswaKelompok2;
                     const uniqueSiswaNames = new Set(kelompokSiswaMingguIni.map(s => s.nama));
                     totalSiswaUntukPersen = uniqueSiswaNames.size;
+
+                    // --- LOGIKA BARU: Tentukan dan tampilkan siswa alpa ---
+                    const hadirSiswaNames = new Set(processedData.map(item => item.Nama_Siswa));
+                    const belumHadirSiswa = kelompokSiswaMingguIni.filter(siswa => !hadirSiswaNames.has(siswa.nama));
+                    
+                    renderAbsentList(belumHadirSiswa);
+                    absentListContainer.style.display = 'block'; // Tampilkan daftar alpa
                 }
                 
                 const searchTerm = searchInput.value.toLowerCase();
@@ -592,69 +665,6 @@
                 renderTable(processedData);
             };
 
-            const generateAttendancePDF = () => {
-                if (fullAttendanceData.length === 0) {
-                    alert('Tidak ada data absensi untuk membuat laporan.');
-                    return;
-                }
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(18);
-                doc.text('Laporan Kehadiran Ekskul KKA', 105, 20, { align: 'center' });
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`SMAN 1 Pangkalan Banteng - Dibuat pada: ${today}`, 105, 28, { align: 'center' });
-
-                const dataByWeek = fullAttendanceData.reduce((acc, current) => {
-                    const week = current['Minggu_Ke'];
-                    if (!acc[week]) acc[week] = [];
-                    acc[week].push(current);
-                    return acc;
-                }, {});
-
-                let yPosition = 40;
-                const sortedWeeks = Object.keys(dataByWeek).sort((a, b) => a - b);
-
-                for (const week of sortedWeeks) {
-                    const weeklyData = dataByWeek[week];
-                    const kelompokSiswa = (week === '1' || week === '3') ? siswaKelompok1 : siswaKelompok2;
-                    const totalSiswaMingguIni = new Set(kelompokSiswa.map(s => s.nama)).size;
-                    const hadirCount = weeklyData.length;
-                    const persentase = totalSiswaMingguIni > 0 ? ((hadirCount / totalSiswaMingguIni) * 100).toFixed(0) : 0;
-                    
-                    if (yPosition > 40 && yPosition + 40 > doc.internal.pageSize.height) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(14);
-                    doc.text(`Laporan Pertemuan - Minggu ke-${week}`, 14, yPosition);
-                    yPosition += 8;
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(10);
-                    doc.text(`Rekapitulasi: ${hadirCount} dari ${totalSiswaMingguIni} siswa hadir (${persentase}%)`, 14, yPosition);
-                    yPosition += 5;
-
-                    const head = [['No.', 'Nama Siswa', 'Kelas', 'Waktu Absen']];
-                    const body = weeklyData.sort((a,b) => a['Nama_Siswa'].localeCompare(b['Nama_Siswa'])).map((row, index) => [
-                        index + 1,
-                        row['Nama_Siswa'],
-                        row['Kelas'],
-                        row['Timestamp']
-                    ]);
-
-                    doc.autoTable({
-                        head: head, body: body, startY: yPosition, theme: 'grid',
-                        headStyles: { fillColor: [0, 123, 255] }, styles: { fontSize: 9 }
-                    });
-                    yPosition = doc.autoTable.previous.finalY + 15;
-                }
-                doc.save(`Laporan_Kehadiran_Ekskul_KKA_${new Date().toISOString().slice(0,10)}.pdf`);
-            };
-
             const generateQRCode = (minggu) => {
                 qrcodeContainer.innerHTML = '';
                 qrcodePlaceholder.style.display = 'none';
@@ -665,7 +675,6 @@
             // --- FUNGSI BARU: Mengambil semua data awal dalam satu panggilan ---
             const fetchInitialData = async () => {
                 try {
-                    // Menambahkan parameter action=getInitialData untuk memberitahu skrip kita mau semua data
                     const response = await fetch(`${SCRIPT_URL}?action=getInitialData`);
                     if (!response.ok) throw new Error('Gagal mengambil data awal dari server.');
                     const data = await response.json();
@@ -807,6 +816,8 @@
                     pesanEl.textContent = 'Absensi berhasil! Data Anda telah terekam.';
                     pesanEl.classList.add('pesan-sukses');
                     pilihNama.disabled = true;
+                    // --- MAINKAN EFEK SUARA ---
+                    document.getElementById('success-sound').play();
                 } catch (error) {
                     console.error('Error sending data to Google Sheet:', error);
                     pesanEl.textContent = 'Gagal mengirim data. Periksa koneksi internet Anda dan coba lagi.';
