@@ -111,6 +111,10 @@
             background-color: var(--bg-secondary);
             color: var(--text-primary);
         }
+        .edit-mode {
+            background-color: var(--bg-primary) !important;
+            border: 1px solid var(--accent) !important;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -463,18 +467,38 @@
         const renderStudents = () => {
             app.studentList.innerHTML = '';
             if (state.students.length === 0) {
-                 app.studentList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Belum ada siswa.</td></tr>`;
-                 return;
+                app.studentList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Belum ada siswa.</td></tr>`;
+                return;
             }
             state.students.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-color';
+                tr.dataset.id = student.id;
                 tr.innerHTML = `
-                    <td class="p-3 font-medium">${student.name}</td>
-                    <td class="p-3 text-secondary">${student.class}</td>
-                    <td class="p-3 text-secondary">${student.group || ''}</td>
+                    <td class="p-3 font-medium">
+                        <span class="view-mode">${student.name}</span>
+                        <input type="text" value="${student.name}" class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
+                    </td>
+                    <td class="p-3 text-secondary">
+                        <span class="view-mode">${student.class}</span>
+                        <input type="text" value="${student.class}" class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
+                    </td>
+                    <td class="p-3 text-secondary">
+                        <span class="view-mode">${student.group || ''}</span>
+                        <select class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
+                            <option value="Pak Arya" ${student.group === 'Pak Arya' ? 'selected' : ''}>Pak Arya</option>
+                            <option value="Pak Fahmi" ${student.group === 'Pak Fahmi' ? 'selected' : ''}>Pak Fahmi</option>
+                        </select>
+                    </td>
                     <td class="p-3 text-right teacher-only">
-                        <button data-id="${student.id}" class="delete-student-btn text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg">Hapus</button>
+                        <div class="view-mode-actions">
+                            <button class="edit-student-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg mr-2">Edit</button>
+                            <button class="delete-student-btn text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg">Hapus</button>
+                        </div>
+                        <div class="edit-mode-actions hidden">
+                            <button class="save-student-btn text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg mr-2">Simpan</button>
+                            <button class="cancel-edit-btn text-sm bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg">Batal</button>
+                        </div>
                     </td>
                 `;
                 app.studentList.appendChild(tr);
@@ -742,8 +766,47 @@
         });
         
         app.studentList.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-student-btn')) {
-                const studentId = e.target.dataset.id;
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const tr = e.target.closest('tr');
+            const studentId = tr.dataset.id;
+
+            if (button.classList.contains('edit-student-btn')) {
+                tr.querySelectorAll('.view-mode, .view-mode-actions').forEach(el => el.classList.add('hidden'));
+                tr.querySelectorAll('.edit-mode, .edit-mode-actions').forEach(el => el.classList.remove('hidden'));
+            }
+
+            if (button.classList.contains('cancel-edit-btn')) {
+                tr.querySelectorAll('.view-mode, .view-mode-actions').forEach(el => el.classList.remove('hidden'));
+                tr.querySelectorAll('.edit-mode, .edit-mode-actions').forEach(el => el.classList.add('hidden'));
+            }
+
+            if (button.classList.contains('save-student-btn')) {
+                const newName = tr.querySelector('input[type="text"]').value.trim();
+                const newClass = tr.querySelectorAll('input[type="text"]')[1].value.trim();
+                const newGroup = tr.querySelector('select').value;
+
+                if (!newName || !newClass) {
+                    alert("Nama dan Kelas tidak boleh kosong.");
+                    return;
+                }
+                
+                try {
+                    const studentRef = doc(db, "data", "kka", "students", studentId);
+                    await updateDoc(studentRef, {
+                        name: newName,
+                        class: newClass,
+                        group: newGroup
+                    });
+                    showToast('✅ Data siswa berhasil diperbarui!');
+                } catch (error) {
+                    console.error("Error updating student: ", error);
+                    alert("Gagal memperbarui data siswa.");
+                }
+            }
+            
+            if (button.classList.contains('delete-student-btn')) {
                 if(confirm('Apakah Anda yakin ingin menghapus siswa ini? Data kehadiran siswa ini akan tetap ada namun tidak akan ditampilkan.')) {
                     try {
                         await deleteDoc(doc(db, "data", "kka", "students", studentId));
