@@ -137,10 +137,15 @@
             <div id="siswa" class="content-tab">
                 <div class="bg-secondary rounded-lg shadow p-6 teacher-only">
                     <h2 class="text-xl font-bold mb-4">Tambah Siswa Baru</h2>
-                    <form id="add-student-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <form id="add-student-form" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <input type="text" id="student-name" placeholder="Nama Lengkap Siswa" class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
                         <input type="text" id="student-class" placeholder="Kelas (Contoh: X MIPA 1)" class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
-                        <button type="submit" class="sm:col-span-2 accent font-bold py-2 px-4 rounded-lg">Tambah Siswa</button>
+                        <select id="student-group" class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                            <option value="">-- Pilih Kelompok --</option>
+                            <option value="Pak Arya">Pak Arya</option>
+                            <option value="Pak Fahmi">Pak Fahmi</option>
+                        </select>
+                        <button type="submit" class="sm:col-span-3 accent font-bold py-2 px-4 rounded-lg">Tambah Siswa</button>
                     </form>
                 </div>
                 <div class="mt-6 bg-secondary rounded-lg shadow p-6">
@@ -151,6 +156,7 @@
                                 <tr class="border-b border-color">
                                     <th class="p-3">Nama</th>
                                     <th class="p-3">Kelas</th>
+                                    <th class="p-3">Kelompok</th>
                                     <th class="p-3 text-right teacher-only">Aksi</th>
                                 </tr>
                             </thead>
@@ -191,20 +197,29 @@
                     </div>
 
                     <div id="attendance-controls" class="hidden">
-                        <div class="flex flex-wrap gap-2 mb-4 teacher-only">
-                             <button id="mark-all-hadir" class="text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg">Tandai Semua Hadir</button>
-                             <button id="mark-all-izin" class="text-sm bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg">Tandai Semua Izin</button>
-                             <button id="mark-all-alfa" class="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg">Tandai Semua Alfa</button>
+                        <div class="flex flex-col sm:flex-row gap-4 mb-4 border-b border-color pb-4">
+                            <div class="flex-1 teacher-only">
+                                <label class="block text-sm font-medium text-secondary mb-1">Tindakan Cepat</label>
+                                <div class="flex flex-wrap gap-2">
+                                     <button id="mark-all-hadir" class="text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg">Semua Hadir</button>
+                                     <button id="mark-all-izin" class="text-sm bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg">Semua Izin</button>
+                                     <button id="mark-all-alfa" class="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg">Semua Alfa</button>
+                                </div>
+                            </div>
+                             <div class="flex-1 flex items-end teacher-only">
+                                 <button id="generate-qr-btn" class="w-full text-sm accent font-bold py-2 px-3 rounded-lg">Generate QR Absen</button>
+                            </div>
                         </div>
-                         <div class="flex flex-wrap gap-2 mb-4 teacher-only">
-                             <button id="generate-qr-btn" class="text-sm accent font-bold py-2 px-3 rounded-lg">Generate QR Absen Mandiri</button>
-                        </div>
+                        
+                        <p id="attendance-group-info" class="mb-4 text-center accent-text font-semibold rounded-md bg-green-500/10 p-2"></p>
 
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <thead>
                                     <tr class="border-b border-color">
                                         <th class="p-3">Nama</th>
+                                        <th class="p-3">Kelas</th>
+                                        <th class="p-3">Kelompok</th>
                                         <th class="p-3 w-40">Status</th>
                                     </tr>
                                 </thead>
@@ -387,6 +402,7 @@
             attendanceList: document.getElementById('attendance-list'),
             attendanceSessionTitle: document.getElementById('attendance-session-title'),
             attendanceControls: document.getElementById('attendance-controls'),
+            attendanceGroupInfo: document.getElementById('attendance-group-info'),
             markAllHadir: document.getElementById('mark-all-hadir'),
             markAllIzin: document.getElementById('mark-all-izin'),
             markAllAlfa: document.getElementById('mark-all-alfa'),
@@ -447,7 +463,7 @@
         const renderStudents = () => {
             app.studentList.innerHTML = '';
             if (state.students.length === 0) {
-                 app.studentList.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-secondary">Belum ada siswa.</td></tr>`;
+                 app.studentList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Belum ada siswa.</td></tr>`;
                  return;
             }
             state.students.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
@@ -456,6 +472,7 @@
                 tr.innerHTML = `
                     <td class="p-3 font-medium">${student.name}</td>
                     <td class="p-3 text-secondary">${student.class}</td>
+                    <td class="p-3 text-secondary">${student.group || ''}</td>
                     <td class="p-3 text-right teacher-only">
                         <button data-id="${student.id}" class="delete-student-btn text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg">Hapus</button>
                     </td>
@@ -489,19 +506,31 @@
         const renderAttendanceSessionSelector = () => {
             const currentVal = app.attendanceSessionSelector.value;
             app.attendanceSessionSelector.innerHTML = '<option value="">-- Pilih Sesi --</option>';
-            state.sessions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(session => {
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const sessionsThisMonth = state.sessions.filter(session => {
+                const sessionDate = new Date(session.date);
+                return sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear;
+            });
+
+            sessionsThisMonth.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(session => {
                 const option = document.createElement('option');
                 option.value = session.id;
                 option.textContent = session.name;
                 app.attendanceSessionSelector.appendChild(option);
             });
-             if (state.sessions.some(s => s.id === currentVal)) {
+            
+             if (sessionsThisMonth.some(s => s.id === currentVal)) {
                 app.attendanceSessionSelector.value = currentVal;
             }
         };
 
         const renderAttendanceList = () => {
             app.attendanceList.innerHTML = '';
+            app.attendanceGroupInfo.textContent = '';
             if (!state.activeSession) {
                 app.attendanceSessionTitle.textContent = 'Pilih sesi untuk memulai';
                 app.attendanceControls.classList.add('hidden');
@@ -510,18 +539,24 @@
 
             const session = state.sessions.find(s => s.id === state.activeSession);
             if (!session) return;
-
+            
             app.attendanceSessionTitle.textContent = session.name;
             app.attendanceControls.classList.remove('hidden');
-            
-            const attendanceData = state.attendance[state.activeSession] || {};
 
-            if (state.students.length === 0) {
-                 app.attendanceList.innerHTML = `<tr><td colspan="2" class="text-center p-4 text-secondary">Tambahkan siswa terlebih dahulu di tab Siswa.</td></tr>`;
+            const isOddWeek = session.week % 2 !== 0;
+            const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+            app.attendanceGroupInfo.textContent = `Jadwal untuk Kelompok: ${scheduledGroup}`;
+
+            const attendanceData = state.attendance[state.activeSession] || {};
+            
+            const filteredStudents = state.students.filter(student => student.group === scheduledGroup);
+
+            if (filteredStudents.length === 0) {
+                 app.attendanceList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Tidak ada siswa di kelompok ${scheduledGroup}.</td></tr>`;
                  return;
             }
 
-            state.students.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
+            filteredStudents.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
                 const status = attendanceData[student.id] || 'Alfa';
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-color';
@@ -535,6 +570,8 @@
 
                 tr.innerHTML = `
                     <td class="p-3 font-medium">${student.name}</td>
+                    <td class="p-3 text-secondary">${student.class}</td>
+                    <td class="p-3 text-secondary">${student.group}</td>
                     <td class="p-3">
                         <select data-student-id="${student.id}" class="attendance-status-select w-full p-2 rounded-md border-transparent focus:outline-none focus:ring-2 focus:ring-green-500 ${statusColorClass}" ${state.settings.userMode === 'student' ? 'disabled' : ''}>
                             <option value="Hadir" ${status === 'Hadir' ? 'selected' : ''}>Hadir</option>
@@ -573,8 +610,12 @@
                         status = state.attendance[weekSession.id][student.id];
                         studentReport.counts[status]++;
                     } else if (weekSession) {
-                        studentReport.counts['Alfa']++;
-                        status = 'Alfa';
+                        const isOddWeek = weekSession.week % 2 !== 0;
+                        const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+                        if(student.group === scheduledGroup){
+                            studentReport.counts['Alfa']++;
+                            status = 'Alfa';
+                        }
                     }
                     studentReport.weeks[i] = status;
                 }
@@ -629,14 +670,23 @@
                 });
 
                 sessions.forEach(session => {
+                    const isOddWeek = session.week % 2 !== 0;
+                    const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+                    const studentsInGroup = state.students.filter(s => s.group === scheduledGroup);
+
                     const attendance = allAttendance[session.id] || {};
                     let hadirCount = 0;
                     Object.values(attendance).forEach(status => {
                         if (status === 'Hadir') { hadirCount++; totalData.datasets[0].data[0]++; } 
                         else if (status === 'Izin') { totalData.datasets[0].data[1]++; } 
-                        else { totalData.datasets[0].data[2]++; }
                     });
-                    const percentage = state.students.length > 0 ? (hadirCount / state.students.length) * 100 : 0;
+
+                    // Alfa count is based on scheduled students not present
+                    const alfaCount = studentsInGroup.length - Object.keys(attendance).filter(k => attendance[k] !== 'Alfa').length;
+                    totalData.datasets[0].data[2] += alfaCount;
+
+
+                    const percentage = studentsInGroup.length > 0 ? (hadirCount / studentsInGroup.length) * 100 : 0;
                     weeklyData.datasets[0].data[session.week - 1] = percentage.toFixed(1);
                 });
                 
@@ -678,7 +728,8 @@
             e.preventDefault();
             const newStudent = {
                 name: document.getElementById('student-name').value.trim(),
-                class: document.getElementById('student-class').value.trim()
+                class: document.getElementById('student-class').value.trim(),
+                group: document.getElementById('student-group').value
             };
             try {
                 await addDoc(collection(db, "data", "kka", "students"), newStudent);
@@ -816,14 +867,23 @@
 
         const markAll = async (status) => {
             if (!state.activeSession) return;
+            const session = state.sessions.find(s => s.id === state.activeSession);
+            if (!session) return;
+
+            const isOddWeek = session.week % 2 !== 0;
+            const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+            
             const updates = {};
-            state.students.forEach(student => {
+            const studentsToMark = state.students.filter(student => student.group === scheduledGroup);
+            
+            studentsToMark.forEach(student => {
                 updates[student.id] = status;
             });
+
             const attendancePath = doc(db, "data", "kka", "attendance", state.activeSession);
             try {
                 await setDoc(attendancePath, updates, { merge: true });
-                showToast(`✅ Semua ditandai ${status}!`);
+                showToast(`✅ Kelompok ${scheduledGroup} ditandai ${status}!`);
             } catch (error) {
                 console.error("Error marking all: ", error);
             }
@@ -914,7 +974,7 @@
                     if(confirm("Anda yakin ingin mengimpor data ini? Data yang ada saat ini akan ditimpa.")){
                         showToast('Mengimpor data...');
                         const batch = writeBatch(db);
-                        imported.students.forEach(s => batch.set(doc(db, "data", "kka", "students", s.id), {name:s.name, class:s.class}));
+                        imported.students.forEach(s => batch.set(doc(db, "data", "kka", "students", s.id), {name:s.name, class:s.class, group: s.group || ''}));
                         imported.sessions.forEach(s => batch.set(doc(db, "data", "kka", "sessions", s.id), s));
                         Object.entries(imported.attendance).forEach(([sid, att]) => batch.set(doc(db, "data", "kka", "attendance", sid), att));
                         batch.set(doc(db, "users", userId), imported.settings);
@@ -931,7 +991,52 @@
             reader.readAsText(file);
         });
 
-        app.exportCsvBtn.addEventListener('click', () => { /* Logic is unchanged and should work */ });
+        app.exportCsvBtn.addEventListener('click', () => { 
+            if(state.students.length === 0){
+                alert("Tidak ada data siswa untuk diekspor.");
+                return;
+            }
+
+            const [year, month] = app.reportMonthInput.value.split('-');
+            const monthName = getMonthName(parseInt(month, 10) - 1);
+            
+            const relevantSessions = state.sessions.filter(s => {
+                const sessionDate = new Date(s.date);
+                return sessionDate.getFullYear() === parseInt(year) && sessionDate.getMonth() === (parseInt(month, 10) - 1);
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8,Nama Siswa,Kelas,Kelompok,Minggu 1,Minggu 2,Minggu 3,Minggu 4,Total Hadir,Total Izin,Total Alfa\n";
+
+             state.students.sort((a,b) => a.name.localeCompare(b.name)).forEach(student => {
+                let row = [student.name, student.class, student.group];
+                let counts = { Hadir: 0, Izin: 0, Alfa: 0 };
+                
+                for (let i = 1; i <= 4; i++) {
+                    const weekSession = relevantSessions.find(s => s.week === i);
+                    let status = '';
+                     if (weekSession) {
+                        const isOddWeek = weekSession.week % 2 !== 0;
+                        const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+                        if(student.group === scheduledGroup){
+                            status = (state.attendance[weekSession.id] && state.attendance[weekSession.id][student.id]) ? state.attendance[weekSession.id][student.id] : 'Alfa';
+                            counts[status]++;
+                        }
+                    }
+                    row.push(status);
+                }
+                row.push(counts.Hadir, counts.Izin, counts.Alfa);
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `absen_KKA_${monthName}${year}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+         });
         app.reportMonthInput.addEventListener('change', renderReport);
         
         app.generateQrBtn.addEventListener('click', () => {
@@ -970,14 +1075,24 @@
             const sessionId = urlParams.get('absen');
             if (sessionId) {
                 history.replaceState(null, '', window.location.pathname); // Clean URL first
-                if (!state.sessions.some(s => s.id === sessionId)) {
-                    alert('Sesi absen tidak ditemukan atau tidak valid.');
-                    return;
+                
+                const session = state.sessions.find(s => s.id === sessionId);
+                if (!session) {
+                     alert('Sesi absen tidak ditemukan atau tidak valid.');
+                     return;
                 }
+
                 const studentName = prompt('Absen mandiri berhasil! Masukkan nama lengkap Anda:');
                 if (studentName) {
                     const student = state.students.find(s => s.name.toLowerCase() === studentName.trim().toLowerCase());
                     if (student) {
+                        const isOddWeek = session.week % 2 !== 0;
+                        const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+                        if(student.group !== scheduledGroup){
+                            alert(`Maaf, sesi ini hanya untuk kelompok ${scheduledGroup}.`);
+                            return;
+                        }
+
                         const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
                         setDoc(attendanceRef, { [student.id]: 'Hadir' }, { merge: true })
                             .then(() => alert(`Terima kasih, ${student.name}! Kehadiran Anda telah dicatat.`))
@@ -1026,7 +1141,8 @@
                 if (user) {
                     userId = user.uid;
                     setupFirestoreListeners();
-                    handleQrScan();
+                    // Initial scan check after data is loaded
+                    setTimeout(handleQrScan, 1000); 
                 } else {
                     signInAnonymously(auth).catch(error => {
                         console.error("Firebase anonymous sign-in error", error);
