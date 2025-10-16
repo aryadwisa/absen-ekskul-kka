@@ -342,17 +342,24 @@
     <script type="module">
     // Import Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, onSnapshot, collection, addDoc, setDoc, updateDoc, deleteDoc, getDocs, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     document.addEventListener('DOMContentLoaded', () => {
         // Firebase instances
-        let db, auth, userId, appId;
+        let db, auth, userId;
         
-        // --- IMPORTANT: Firebase configuration will be provided externally ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        appId = typeof __app_id !== 'undefined' ? __app_id : 'default-kka-app';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- LANGKAH 1: PASTE KONFIGURASI FIREBASE ANDA DI SINI ---
+        // Konfigurasi Firebase Anda sudah dimasukkan.
+        const firebaseConfig = {
+            apiKey: "AIzaSyDM6GIuXiK0g5wzUPE0B4OvP0d8ayrIn1I",
+            authDomain: "marine-album-472517-n1.firebaseapp.com",
+            projectId: "marine-album-472517-n1",
+            storageBucket: "marine-album-472517-n1.appspot.com",
+            messagingSenderId: "697935273550",
+            appId: "1:697935273550:web:30b1342697649797686d1f",
+            measurementId: "G-NSQL9FSCW7"
+        };
         
         // Local state of the application, synchronized with Firestore
         let state = {
@@ -613,8 +620,7 @@
             const totalData = { labels: ['Hadir', 'Izin', 'Alfa'], datasets: [{ data: [0, 0, 0], backgroundColor: ['rgba(34, 197, 94, 0.7)', 'rgba(234, 179, 8, 0.7)', 'rgba(239, 68, 68, 0.7)'], borderColor: [ 'rgba(34, 197, 94, 1)', 'rgba(234, 179, 8, 1)', 'rgba(239, 68, 68, 1)'], borderWidth: 1 }] };
             let allAttendance = {};
 
-            // We need to fetch attendance for all relevant sessions for the chart.
-            const attendancePromises = sessions.map(s => getDoc(doc(db, `/artifacts/${appId}/public/data/attendance`, s.id)));
+            const attendancePromises = sessions.map(s => getDoc(doc(db, "data", "kka", "attendance", s.id)));
             Promise.all(attendancePromises).then(attendanceDocs => {
                 attendanceDocs.forEach((docSnap, index) => {
                     if (docSnap.exists()) {
@@ -675,7 +681,7 @@
                 class: document.getElementById('student-class').value.trim()
             };
             try {
-                await addDoc(collection(db, `/artifacts/${appId}/public/data/students`), newStudent);
+                await addDoc(collection(db, "data", "kka", "students"), newStudent);
                 showToast('✅ Siswa berhasil ditambahkan!');
                 app.addStudentForm.reset();
             } catch (error) {
@@ -689,7 +695,7 @@
                 const studentId = e.target.dataset.id;
                 if(confirm('Apakah Anda yakin ingin menghapus siswa ini? Data kehadiran siswa ini akan tetap ada namun tidak akan ditampilkan.')) {
                     try {
-                        await deleteDoc(doc(db, `/artifacts/${appId}/public/data/students`, studentId));
+                        await deleteDoc(doc(db, "data", "kka", "students", studentId));
                         showToast('✅ Siswa berhasil dihapus!');
                     } catch (error) {
                         console.error("Error deleting student: ", error);
@@ -735,10 +741,10 @@
                     date: fridayDate.toISOString()
                 };
                 
-                const sessionRef = doc(db, `/artifacts/${appId}/public/data/sessions`, sessionId);
+                const sessionRef = doc(db, "data", "kka", "sessions", sessionId);
                 batch.set(sessionRef, newSession);
                 
-                const attendanceRef = doc(db, `/artifacts/${appId}/public/data/attendance`, sessionId);
+                const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
                 batch.set(attendanceRef, {});
             });
 
@@ -756,8 +762,8 @@
                 const sessionId = e.target.dataset.id;
                 if(confirm('Apakah Anda yakin ingin menghapus sesi ini beserta data absensinya?')) {
                    try {
-                        await deleteDoc(doc(db, `/artifacts/${appId}/public/data/sessions`, sessionId));
-                        await deleteDoc(doc(db, `/artifacts/${appId}/public/data/attendance`, sessionId));
+                        await deleteDoc(doc(db, "data", "kka", "sessions", sessionId));
+                        await deleteDoc(doc(db, "data", "kka", "attendance", sessionId));
                         
                         if (state.activeSession === sessionId) {
                             if (attendanceListener) {
@@ -781,11 +787,11 @@
         let attendanceListener = null;
         app.attendanceSessionSelector.addEventListener('change', (e) => {
             state.activeSession = e.target.value;
-            if(attendanceListener) attendanceListener(); // Unsubscribe from previous listener
+            if(attendanceListener) attendanceListener();
 
             if(state.activeSession){
-                const attendancePath = `/artifacts/${appId}/public/data/attendance/${state.activeSession}`;
-                attendanceListener = onSnapshot(doc(db, attendancePath), (docSnap) => {
+                const attendancePath = doc(db, "data", "kka", "attendance", state.activeSession);
+                attendanceListener = onSnapshot(attendancePath, (docSnap) => {
                     state.attendance[state.activeSession] = docSnap.exists() ? docSnap.data() : {};
                     renderAttendanceList();
                     renderReport();
@@ -799,9 +805,9 @@
             if (e.target.classList.contains('attendance-status-select')) {
                 const studentId = e.target.dataset.studentId;
                 const newStatus = e.target.value;
-                const attendancePath = `/artifacts/${appId}/public/data/attendance/${state.activeSession}`;
+                const attendancePath = doc(db, "data", "kka", "attendance", state.activeSession);
                 try {
-                    await setDoc(doc(db, attendancePath), { [studentId]: newStatus }, { merge: true });
+                    await setDoc(attendancePath, { [studentId]: newStatus }, { merge: true });
                 } catch (error) {
                     console.error("Error updating attendance: ", error);
                 }
@@ -814,9 +820,9 @@
             state.students.forEach(student => {
                 updates[student.id] = status;
             });
-            const attendancePath = `/artifacts/${appId}/public/data/attendance/${state.activeSession}`;
+            const attendancePath = doc(db, "data", "kka", "attendance", state.activeSession);
             try {
-                await setDoc(doc(db, attendancePath), updates, { merge: true });
+                await setDoc(attendancePath, updates, { merge: true });
                 showToast(`✅ Semua ditandai ${status}!`);
             } catch (error) {
                 console.error("Error marking all: ", error);
@@ -830,7 +836,7 @@
         const saveSettings = async (newSettings) => {
             state.settings = { ...state.settings, ...newSettings };
              try {
-                await setDoc(doc(db, `/artifacts/${appId}/users/${userId}/settings/user_settings`), state.settings);
+                await setDoc(doc(db, "users", userId), state.settings);
              } catch (error) {
                 console.error("Error saving settings: ", error);
              }
@@ -883,7 +889,7 @@
                 attendance: {},
                 settings: state.settings
             };
-            const attendancePromises = state.sessions.map(s => getDoc(doc(db, `/artifacts/${appId}/public/data/attendance`, s.id)));
+            const attendancePromises = state.sessions.map(s => getDoc(doc(db, "data", "kka", "attendance", s.id)));
             const attendanceDocs = await Promise.all(attendancePromises);
             attendanceDocs.forEach((docSnap, index) => {
                 if (docSnap.exists()) {
@@ -908,10 +914,10 @@
                     if(confirm("Anda yakin ingin mengimpor data ini? Data yang ada saat ini akan ditimpa.")){
                         showToast('Mengimpor data...');
                         const batch = writeBatch(db);
-                        imported.students.forEach(s => batch.set(doc(db, `/artifacts/${appId}/public/data/students`, s.id), {name:s.name, class:s.class}));
-                        imported.sessions.forEach(s => batch.set(doc(db, `/artifacts/${appId}/public/data/sessions`, s.id), s));
-                        Object.entries(imported.attendance).forEach(([sid, att]) => batch.set(doc(db, `/artifacts/${appId}/public/data/attendance`, sid), att));
-                        batch.set(doc(db, `/artifacts/${appId}/users/${userId}/settings/user_settings`), imported.settings);
+                        imported.students.forEach(s => batch.set(doc(db, "data", "kka", "students", s.id), {name:s.name, class:s.class}));
+                        imported.sessions.forEach(s => batch.set(doc(db, "data", "kka", "sessions", s.id), s));
+                        Object.entries(imported.attendance).forEach(([sid, att]) => batch.set(doc(db, "data", "kka", "attendance", sid), att));
+                        batch.set(doc(db, "users", userId), imported.settings);
                         
                         await batch.commit();
                         showToast('✅ Data berhasil diimpor! Halaman akan dimuat ulang.');
@@ -972,7 +978,7 @@
                 if (studentName) {
                     const student = state.students.find(s => s.name.toLowerCase() === studentName.trim().toLowerCase());
                     if (student) {
-                        const attendanceRef = doc(db, `/artifacts/${appId}/public/data/attendance`, sessionId);
+                        const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
                         setDoc(attendanceRef, { [student.id]: 'Hadir' }, { merge: true })
                             .then(() => alert(`Terima kasih, ${student.name}! Kehadiran Anda telah dicatat.`))
                             .catch(err => alert("Gagal menyimpan kehadiran."));
@@ -989,23 +995,26 @@
             listeners.forEach(unsub => unsub()); // Unsubscribe from old listeners
             listeners = [];
 
-            const studentsPath = `/artifacts/${appId}/public/data/students`;
-            const sessionsPath = `/artifacts/${appId}/public/data/sessions`;
-            const settingsPath = `/artifacts/${appId}/users/${userId}/settings/user_settings`;
+            const studentsPath = collection(db, "data", "kka", "students");
+            const sessionsPath = collection(db, "data", "kka", "sessions");
+            const settingsPath = doc(db, "users", userId);
 
-            listeners.push(onSnapshot(collection(db, studentsPath), snap => { state.students = snap.docs.map(d => ({...d.data(), id:d.id})); renderStudents(); renderAttendanceList(); renderReport(); }));
-            listeners.push(onSnapshot(collection(db, sessionsPath), snap => { state.sessions = snap.docs.map(d => ({...d.data(), id:d.id})); renderSessions(); renderAttendanceSessionSelector(); renderReport(); }));
-            listeners.push(onSnapshot(doc(db, settingsPath), docSnap => {
+            listeners.push(onSnapshot(studentsPath, snap => { state.students = snap.docs.map(d => ({...d.data(), id:d.id})); renderStudents(); renderAttendanceList(); renderReport(); }));
+            listeners.push(onSnapshot(sessionsPath, snap => { state.sessions = snap.docs.map(d => ({...d.data(), id:d.id})); renderSessions(); renderAttendanceSessionSelector(); renderReport(); }));
+            listeners.push(onSnapshot(settingsPath, docSnap => {
                 if (docSnap.exists()) { state.settings = { ...state.settings, ...docSnap.data() }; } 
-                else { setDoc(doc(db, settingsPath), state.settings); }
+                else { setDoc(settingsPath, state.settings); }
                 applyTheme(); updateUIForUserMode();
             }));
         }
 
         // --- Application Initialization ---
         const init = () => {
-            if (!firebaseConfig || !appId || !initialAuthToken) {
-                document.body.innerHTML = `<div class="text-center p-8 text-red-400">Gagal memuat konfigurasi aplikasi. Pastikan aplikasi dijalankan di lingkungan yang benar.</div>`;
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("GANTI_DENGAN")) {
+                document.body.innerHTML = `<div class="text-center p-8 text-yellow-400 bg-red-900/50 rounded-lg max-w-2xl mx-auto mt-10">
+                    <h1 class="font-bold text-2xl">Konfigurasi Firebase Belum Diisi</h1>
+                    <p class="mt-2">Silakan buka file HTML ini di editor teks, cari bagian 'firebaseConfig', dan isi dengan konfigurasi dari proyek Firebase Anda.</p>
+                    </div>`;
                 return;
             }
             
@@ -1018,14 +1027,14 @@
                     userId = user.uid;
                     setupFirestoreListeners();
                     handleQrScan();
+                } else {
+                    signInAnonymously(auth).catch(error => {
+                        console.error("Firebase anonymous sign-in error", error);
+                        document.body.innerHTML = `<div class="text-center p-8 text-red-400">Autentikasi gagal. Tidak dapat memuat aplikasi.</div>`;
+                    });
                 }
             });
-
-            signInWithCustomToken(auth, initialAuthToken).catch(error => {
-                console.error("Firebase sign-in error", error);
-                document.body.innerHTML = `<div class="text-center p-8 text-red-400">Autentikasi gagal. Tidak dapat memuat aplikasi.</div>`;
-            });
-
+            
             const today = new Date();
             app.reportMonthInput.value = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
             switchTab(state.activeTab);
