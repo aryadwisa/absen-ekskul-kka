@@ -102,7 +102,7 @@
         #toast.show {
             bottom: 20px;
         }
-        select, input[type="text"], input[type="password"], input[type="month"] {
+        select, input[type="text"], input[type="password"], input[type="month"], input[type="search"] {
             background-color: var(--bg-primary);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
@@ -114,6 +114,27 @@
         .edit-mode {
             background-color: var(--bg-primary) !important;
             border: 1px solid var(--accent) !important;
+        }
+        th[data-sort] {
+            cursor: pointer;
+            position: relative;
+        }
+        .sort-icon {
+            display: inline-block;
+            width: 1em;
+            text-align: center;
+            opacity: 0.5;
+        }
+        th[data-sort-order] .sort-icon {
+            opacity: 1;
+        }
+        th[data-sort-order="asc"] .sort-icon::after {
+            content: '▲';
+            font-size: 0.8em;
+        }
+        th[data-sort-order="desc"] .sort-icon::after {
+            content: '▼';
+            font-size: 0.8em;
         }
     </style>
 </head>
@@ -153,14 +174,24 @@
                     </form>
                 </div>
                 <div class="mt-6 bg-secondary rounded-lg shadow p-6">
-                    <h2 class="text-xl font-bold mb-4">Daftar Siswa</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Daftar Siswa</h2>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <input type="search" id="search-student" placeholder="Cari nama siswa..." class="p-2 rounded-md w-full sm:flex-1">
+                        <select id="filter-student-group" class="p-2 rounded-md w-full sm:w-auto">
+                            <option value="semua">Semua Kelompok</option>
+                            <option value="Pak Arya">Pak Arya</option>
+                            <option value="Pak Fahmi">Pak Fahmi</option>
+                        </select>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="border-b border-color">
-                                    <th class="p-3">Nama</th>
-                                    <th class="p-3">Kelas</th>
-                                    <th class="p-3">Kelompok</th>
+                                    <th class="p-3" data-sort="name">Nama <span class="sort-icon"></span></th>
+                                    <th class="p-3" data-sort="class">Kelas <span class="sort-icon"></span></th>
+                                    <th class="p-3" data-sort="group">Kelompok <span class="sort-icon"></span></th>
                                     <th class="p-3 text-right teacher-only">Aksi</th>
                                 </tr>
                             </thead>
@@ -380,18 +411,22 @@
             measurementId: "G-NSQL9FSCW7"
         };
         
-        // Local state of the application, synchronized with Firestore
+        // Local state of the application
         let state = {
             students: [],
             sessions: [],
-            attendance: {}, // { 'sessionId': { 'studentId': 'status' } }
-            settings: {
-                theme: 'dark',
-                userMode: 'student',
-                pin: '1234'
-            },
+            attendance: {},
+            settings: { theme: 'dark', userMode: 'student', pin: '1234' },
             activeTab: 'absen',
             activeSession: null
+        };
+
+        // UI state for student list
+        let uiState = {
+            studentSearch: '',
+            studentFilterGroup: 'semua',
+            studentSortBy: 'name',
+            studentSortOrder: 'asc'
         };
 
         // DOM Elements
@@ -400,6 +435,9 @@
             contentTabs: document.querySelectorAll('.content-tab'),
             addStudentForm: document.getElementById('add-student-form'),
             studentList: document.getElementById('student-list'),
+            studentListHeader: document.querySelector('#student-list').parentElement.querySelector('thead'),
+            searchStudentInput: document.getElementById('search-student'),
+            filterStudentGroupSelect: document.getElementById('filter-student-group'),
             generateSessionsBtn: document.getElementById('generate-sessions-btn'),
             sessionList: document.getElementById('session-list'),
             attendanceSessionSelector: document.getElementById('attendance-session-selector'),
@@ -465,44 +503,74 @@
 
         // Render Functions (called by Firestore listeners)
         const renderStudents = () => {
-            app.studentList.innerHTML = '';
-            if (state.students.length === 0) {
-                app.studentList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Belum ada siswa.</td></tr>`;
-                return;
-            }
-            state.students.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-color';
-                tr.dataset.id = student.id;
-                tr.innerHTML = `
-                    <td class="p-3 font-medium">
-                        <span class="view-mode">${student.name}</span>
-                        <input type="text" value="${student.name}" class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
-                    </td>
-                    <td class="p-3 text-secondary">
-                        <span class="view-mode">${student.class}</span>
-                        <input type="text" value="${student.class}" class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
-                    </td>
-                    <td class="p-3 text-secondary">
-                        <span class="view-mode">${student.group || ''}</span>
-                        <select class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
-                            <option value="Pak Arya" ${student.group === 'Pak Arya' ? 'selected' : ''}>Pak Arya</option>
-                            <option value="Pak Fahmi" ${student.group === 'Pak Fahmi' ? 'selected' : ''}>Pak Fahmi</option>
-                        </select>
-                    </td>
-                    <td class="p-3 text-right teacher-only">
-                        <div class="view-mode-actions">
-                            <button class="edit-student-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg mr-2">Edit</button>
-                            <button class="delete-student-btn text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg">Hapus</button>
-                        </div>
-                        <div class="edit-mode-actions hidden">
-                            <button class="save-student-btn text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg mr-2">Simpan</button>
-                            <button class="cancel-edit-btn text-sm bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg">Batal</button>
-                        </div>
-                    </td>
-                `;
-                app.studentList.appendChild(tr);
+            // 1. Filter
+            let processedStudents = state.students.filter(student => {
+                const matchesSearch = student.name.toLowerCase().includes(uiState.studentSearch.toLowerCase());
+                const matchesGroup = uiState.studentFilterGroup === 'semua' || student.group === uiState.studentFilterGroup;
+                return matchesSearch && matchesGroup;
             });
+
+            // 2. Sort
+            processedStudents.sort((a, b) => {
+                const valA = (a[uiState.studentSortBy] || '').toLowerCase();
+                const valB = (b[uiState.studentSortBy] || '').toLowerCase();
+                if (valA < valB) {
+                    return uiState.studentSortOrder === 'asc' ? -1 : 1;
+                }
+                if (valA > valB) {
+                    return uiState.studentSortOrder === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+
+            // 3. Render to DOM
+            app.studentList.innerHTML = '';
+            if (processedStudents.length === 0) {
+                app.studentList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Tidak ada siswa yang cocok.</td></tr>`;
+            } else {
+                processedStudents.forEach(student => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-color';
+                    tr.dataset.id = student.id;
+                    tr.innerHTML = `
+                        <td class="p-3 font-medium">
+                            <span class="view-mode">${student.name}</span>
+                            <input type="text" value="${student.name}" class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
+                        </td>
+                        <td class="p-3 text-secondary">
+                            <span class="view-mode">${student.class}</span>
+                            <input type="text" value="${student.class}" class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
+                        </td>
+                        <td class="p-3 text-secondary">
+                            <span class="view-mode">${student.group || ''}</span>
+                            <select class="edit-mode p-1 rounded-md w-full hidden bg-primary border-accent">
+                                <option value="Pak Arya" ${student.group === 'Pak Arya' ? 'selected' : ''}>Pak Arya</option>
+                                <option value="Pak Fahmi" ${student.group === 'Pak Fahmi' ? 'selected' : ''}>Pak Fahmi</option>
+                            </select>
+                        </td>
+                        <td class="p-3 text-right teacher-only">
+                            <div class="view-mode-actions">
+                                <button class="edit-student-btn text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg mr-2">Edit</button>
+                                <button class="delete-student-btn text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg">Hapus</button>
+                            </div>
+                            <div class="edit-mode-actions hidden">
+                                <button class="save-student-btn text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg mr-2">Simpan</button>
+                                <button class="cancel-edit-btn text-sm bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg">Batal</button>
+                            </div>
+                        </td>
+                    `;
+                    app.studentList.appendChild(tr);
+                });
+            }
+
+            // 4. Update sort indicators in header
+            app.studentListHeader.querySelectorAll('th[data-sort]').forEach(th => {
+                th.removeAttribute('data-sort-order');
+                if (th.dataset.sort === uiState.studentSortBy) {
+                    th.setAttribute('data-sort-order', uiState.studentSortOrder);
+                }
+            });
+
             updateUIForUserMode();
         };
 
@@ -817,6 +885,30 @@
                     }
                 }
             }
+        });
+
+        app.searchStudentInput.addEventListener('input', (e) => {
+            uiState.studentSearch = e.target.value;
+            renderStudents();
+        });
+
+        app.filterStudentGroupSelect.addEventListener('change', (e) => {
+            uiState.studentFilterGroup = e.target.value;
+            renderStudents();
+        });
+
+        app.studentListHeader.addEventListener('click', (e) => {
+            const header = e.target.closest('th[data-sort]');
+            if (!header) return;
+
+            const sortBy = header.dataset.sort;
+            if (uiState.studentSortBy === sortBy) {
+                uiState.studentSortOrder = uiState.studentSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                uiState.studentSortBy = sortBy;
+                uiState.studentSortOrder = 'asc';
+            }
+            renderStudents();
         });
 
         app.generateSessionsBtn.addEventListener('click', async () => {
@@ -1177,12 +1269,23 @@
             const sessionsPath = collection(db, "data", "kka", "sessions");
             const settingsPath = doc(db, "users", userId);
 
-            listeners.push(onSnapshot(studentsPath, snap => { state.students = snap.docs.map(d => ({...d.data(), id:d.id})); renderStudents(); renderAttendanceList(); renderReport(); }));
-            listeners.push(onSnapshot(sessionsPath, snap => { state.sessions = snap.docs.map(d => ({...d.data(), id:d.id})); renderSessions(); renderAttendanceSessionSelector(); renderReport(); }));
+            listeners.push(onSnapshot(studentsPath, snap => {
+                state.students = snap.docs.map(d => ({...d.data(), id:d.id}));
+                renderStudents(); // This will now filter/sort automatically
+                renderAttendanceList();
+                renderReport();
+            }));
+            listeners.push(onSnapshot(sessionsPath, snap => {
+                state.sessions = snap.docs.map(d => ({...d.data(), id:d.id}));
+                renderSessions();
+                renderAttendanceSessionSelector();
+                renderReport();
+            }));
             listeners.push(onSnapshot(settingsPath, docSnap => {
                 if (docSnap.exists()) { state.settings = { ...state.settings, ...docSnap.data() }; } 
                 else { setDoc(settingsPath, state.settings); }
-                applyTheme(); updateUIForUserMode();
+                applyTheme();
+                updateUIForUserMode();
             }));
         }
 
