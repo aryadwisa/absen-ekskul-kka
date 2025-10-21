@@ -136,6 +136,53 @@
             content: '▼';
             font-size: 0.8em;
         }
+
+        /* Student Success Animation */
+        #student-success-notification {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #7ac142;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: #fff;
+            stroke-miterlimit: 10;
+            margin: 10% auto;
+            box-shadow: inset 0px 0px 0px #7ac142;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+        @keyframes scale {
+            0%, 100% { transform: none; }
+            50% { transform: scale3d(1.1, 1.1, 1); }
+        }
+        @keyframes fill {
+            100% { box-shadow: inset 0px 0px 0px 50px #7ac142; }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -155,6 +202,18 @@
             <footer class="text-center mt-4 text-xs text-secondary">
                 SMAN 1 Pangkalan Banteng
             </footer>
+        </div>
+    </div>
+    
+    <!-- Notifikasi Sukses Absen Mandiri -->
+    <div id="student-success-notification" class="items-center justify-center">
+        <div class="text-center">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <h2 id="success-message-name" class="text-3xl font-bold text-white mb-2"></h2>
+            <p id="success-message-text" class="text-lg text-gray-300">Kehadiran Anda telah berhasil dicatat. Terima kasih!</p>
         </div>
     </div>
 
@@ -257,7 +316,7 @@
                                 <div class="flex flex-wrap gap-2">
                                      <button id="mark-all-hadir" class="text-sm bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg">Semua Hadir</button>
                                      <button id="mark-all-izin" class="text-sm bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg">Semua Izin</button>
-                                     <button id="mark-all-alfa" class="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg">Semua Alfa</button>
+                                     <button id="mark-all-alfa" class="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg">Reset Absen</button>
                                 </div>
                             </div>
                              <div class="flex-1 flex items-end teacher-only">
@@ -265,7 +324,10 @@
                             </div>
                         </div>
                         
-                        <p id="attendance-group-info" class="mb-4 text-center accent-text font-semibold rounded-md bg-green-500/10 p-2"></p>
+                        <div class="flex justify-between items-center">
+                            <p id="attendance-group-info" class="mb-4 text-left accent-text font-semibold"></p>
+                            <p id="attendance-counter" class="mb-4 text-sm text-secondary font-medium"></p>
+                        </div>
 
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
@@ -437,7 +499,8 @@
             attendance: {},
             settings: { theme: 'dark', userMode: 'student', pin: '1234' },
             activeTab: 'absen',
-            activeSession: null
+            activeSession: null,
+            previousAttendance: {}
         };
 
         // UI state for student list
@@ -455,6 +518,9 @@
             studentViewSessionName: document.getElementById('student-view-session-name'),
             studentViewGroupName: document.getElementById('student-view-group-name'),
             studentSelfAttendanceList: document.getElementById('student-self-attendance-list'),
+            studentSuccessNotification: document.getElementById('student-success-notification'),
+            successMessageName: document.getElementById('success-message-name'),
+            successMessageText: document.getElementById('success-message-text'),
             tabs: document.querySelectorAll('.tab-button'),
             contentTabs: document.querySelectorAll('.content-tab'),
             addStudentForm: document.getElementById('add-student-form'),
@@ -469,6 +535,7 @@
             attendanceSessionTitle: document.getElementById('attendance-session-title'),
             attendanceControls: document.getElementById('attendance-controls'),
             attendanceGroupInfo: document.getElementById('attendance-group-info'),
+            attendanceCounter: document.getElementById('attendance-counter'),
             markAllHadir: document.getElementById('mark-all-hadir'),
             markAllIzin: document.getElementById('mark-all-izin'),
             markAllAlfa: document.getElementById('mark-all-alfa'),
@@ -644,12 +711,31 @@
             }
         };
 
+        const updateAttendanceCounter = () => {
+            if (!state.activeSession) {
+                app.attendanceCounter.textContent = '';
+                return;
+            }
+            const session = state.sessions.find(s => s.id === state.activeSession);
+            if (!session) return;
+
+            const isOddWeek = session.week % 2 !== 0;
+            const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+            const totalStudentsInGroup = state.students.filter(s => s.group === scheduledGroup).length;
+            
+            const attendanceData = state.attendance[state.activeSession] || {};
+            const attendedCount = Object.values(attendanceData).filter(status => status !== 'Belum Absen').length;
+
+            app.attendanceCounter.textContent = `Siswa Sudah Absen: ${attendedCount} / ${totalStudentsInGroup}`;
+        };
+
         const renderAttendanceList = () => {
             app.attendanceList.innerHTML = '';
             app.attendanceGroupInfo.textContent = '';
             if (!state.activeSession) {
                 app.attendanceSessionTitle.textContent = 'Pilih sesi untuk memulai';
                 app.attendanceControls.classList.add('hidden');
+                updateAttendanceCounter();
                 return;
             }
 
@@ -669,11 +755,12 @@
 
             if (filteredStudents.length === 0) {
                  app.attendanceList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-secondary">Tidak ada siswa di kelompok ${scheduledGroup}.</td></tr>`;
+                 updateAttendanceCounter();
                  return;
             }
 
             filteredStudents.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
-                const status = attendanceData[student.id] || 'Alfa';
+                const status = attendanceData[student.id] || 'Belum Absen';
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-color';
                 
@@ -682,6 +769,7 @@
                     case 'Hadir': statusColorClass = 'bg-green-600/20 text-green-400'; break;
                     case 'Izin': statusColorClass = 'bg-yellow-600/20 text-yellow-400'; break;
                     case 'Alfa': statusColorClass = 'bg-red-600/20 text-red-400'; break;
+                    default: statusColorClass = 'bg-gray-600/20 text-gray-400';
                 }
 
                 tr.innerHTML = `
@@ -690,6 +778,7 @@
                     <td class="p-3 text-secondary">${student.group}</td>
                     <td class="p-3">
                         <select data-student-id="${student.id}" class="attendance-status-select w-full p-2 rounded-md border-transparent focus:outline-none focus:ring-2 focus:ring-green-500 ${statusColorClass}" ${state.settings.userMode === 'student' ? 'disabled' : ''}>
+                            <option value="Belum Absen" ${status === 'Belum Absen' ? 'selected' : ''}>Belum Absen</option>
                             <option value="Hadir" ${status === 'Hadir' ? 'selected' : ''}>Hadir</option>
                             <option value="Izin" ${status === 'Izin' ? 'selected' : ''}>Izin</option>
                             <option value="Alfa" ${status === 'Alfa' ? 'selected' : ''}>Alfa</option>
@@ -699,6 +788,7 @@
                 app.attendanceList.appendChild(tr);
             });
             updateUIForUserMode();
+            updateAttendanceCounter();
         };
         
         const renderReport = () => {
@@ -724,7 +814,7 @@
                     let status = '-';
                     if (weekSession && state.attendance[weekSession.id] && state.attendance[weekSession.id][student.id]) {
                         status = state.attendance[weekSession.id][student.id];
-                        studentReport.counts[status]++;
+                        if(status !== 'Belum Absen') studentReport.counts[status]++;
                     } else if (weekSession) {
                         const isOddWeek = weekSession.week % 2 !== 0;
                         const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
@@ -749,7 +839,7 @@
                         case 'Alfa': cellClass = 'text-red-400'; break;
                         default: cellClass = 'text-secondary';
                     }
-                    return `<td class="p-3 text-center ${cellClass}">${status.charAt(0)}</td>`
+                    return `<td class="p-3 text-center ${cellClass}">${status === 'Belum Absen' ? '?' : status.charAt(0)}</td>`
                 };
 
                 tr.innerHTML = `
@@ -798,7 +888,7 @@
                     });
 
                     // Alfa count is based on scheduled students not present
-                    const alfaCount = studentsInGroup.length - Object.keys(attendance).filter(k => attendance[k] !== 'Alfa').length;
+                    const alfaCount = studentsInGroup.length - Object.keys(attendance).filter(k => attendance[k] === 'Hadir' || attendance[k] === 'Izin').length;
                     totalData.datasets[0].data[2] += alfaCount;
 
 
@@ -1020,9 +1110,25 @@
             if(attendanceListener) attendanceListener();
 
             if(state.activeSession){
+                state.previousAttendance = { ...(state.attendance[state.activeSession] || {}) };
                 const attendancePath = doc(db, "data", "kka", "attendance", state.activeSession);
                 attendanceListener = onSnapshot(attendancePath, (docSnap) => {
-                    state.attendance[state.activeSession] = docSnap.exists() ? docSnap.data() : {};
+                    const newAttendanceData = docSnap.exists() ? docSnap.data() : {};
+                    
+                    // Check for new self-attendance
+                    for(const studentId in newAttendanceData) {
+                        const oldStatus = state.previousAttendance[studentId] || 'Belum Absen';
+                        const newStatus = newAttendanceData[studentId];
+                        if (newStatus === 'Hadir' && oldStatus !== 'Hadir') {
+                            const student = state.students.find(s => s.id === studentId);
+                            if (student) {
+                                showToast(`✅ ${student.name} berhasil absen!`);
+                            }
+                        }
+                    }
+
+                    state.attendance[state.activeSession] = newAttendanceData;
+                    state.previousAttendance = { ...newAttendanceData };
                     renderAttendanceList();
                     renderReport();
                 });
@@ -1070,7 +1176,7 @@
 
         app.markAllHadir.addEventListener('click', () => markAll('Hadir'));
         app.markAllIzin.addEventListener('click', () => markAll('Izin'));
-        app.markAllAlfa.addEventListener('click', () => markAll('Alfa'));
+        app.markAllAlfa.addEventListener('click', () => markAll('Belum Absen'));
         
         const saveSettings = async (newSettings) => {
             state.settings = { ...state.settings, ...newSettings };
@@ -1088,6 +1194,8 @@
         app.switchModeBtn.addEventListener('click', () => {
             if (state.settings.userMode === 'teacher') {
                 saveSettings({ userMode: 'student' });
+                 app.mainAppView.style.opacity = '0';
+                 setTimeout(() => location.reload(), 300);
             } else {
                 app.pinModal.style.display = 'flex';
                 app.pinInput.focus();
@@ -1280,37 +1388,38 @@
                 const scheduledStudents = allStudents.filter(s => s.group === scheduledGroup).sort((a,b) => a.name.localeCompare(b.name));
 
                 const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
-                const attendanceSnap = await getDoc(attendanceRef);
-                const attendanceData = attendanceSnap.exists() ? attendanceSnap.data() : {};
-
-                app.studentSelfAttendanceList.innerHTML = '';
-                if(scheduledStudents.length === 0) {
-                     app.studentSelfAttendanceList.innerHTML = `<p class="text-center text-secondary">Tidak ada siswa yang terjadwal untuk sesi ini.</p>`;
-                     return;
-                }
-
-                scheduledStudents.forEach(student => {
-                    const studentAttendance = attendanceData[student.id];
-                    const div = document.createElement('div');
-                    div.className = 'bg-primary p-3 rounded-lg flex justify-between items-center';
-                    
-                    let statusOrButton;
-                    if(studentAttendance === 'Hadir') {
-                        statusOrButton = `<span class="font-bold text-green-400">✅ Sudah Absen</span>`;
-                    } else if (studentAttendance === 'Izin' || studentAttendance === 'Alfa') {
-                        statusOrButton = `<span class="font-semibold text-yellow-400">Tidak Hadir</span>`;
-                    } else {
-                        statusOrButton = `<button data-student-id="${student.id}" data-student-name="${student.name}" class="self-attend-btn accent font-bold py-1 px-4 rounded-lg text-sm">Hadir</button>`;
+                
+                onSnapshot(attendanceRef, (attendanceSnap) => {
+                    const attendanceData = attendanceSnap.exists() ? attendanceSnap.data() : {};
+                    app.studentSelfAttendanceList.innerHTML = '';
+                    if(scheduledStudents.length === 0) {
+                         app.studentSelfAttendanceList.innerHTML = `<p class="text-center text-secondary">Tidak ada siswa yang terjadwal untuk sesi ini.</p>`;
+                         return;
                     }
 
-                    div.innerHTML = `
-                        <div>
-                            <p class="font-medium">${student.name}</p>
-                            <p class="text-xs text-secondary">${student.class}</p>
-                        </div>
-                        ${statusOrButton}
-                    `;
-                    app.studentSelfAttendanceList.appendChild(div);
+                    scheduledStudents.forEach(student => {
+                        const studentAttendance = attendanceData[student.id];
+                        const div = document.createElement('div');
+                        div.className = 'bg-primary p-3 rounded-lg flex justify-between items-center';
+                        
+                        let statusOrButton;
+                        if(studentAttendance === 'Hadir') {
+                            statusOrButton = `<span class="font-bold text-green-400">✅ Sudah Absen</span>`;
+                        } else if (studentAttendance === 'Izin' || studentAttendance === 'Alfa') {
+                            statusOrButton = `<span class="font-semibold text-yellow-400">Tidak Hadir</span>`;
+                        } else {
+                            statusOrButton = `<button data-student-id="${student.id}" data-student-name="${student.name}" class="self-attend-btn accent font-bold py-1 px-4 rounded-lg text-sm">Hadir</button>`;
+                        }
+
+                        div.innerHTML = `
+                            <div>
+                                <p class="font-medium">${student.name}</p>
+                                <p class="text-xs text-secondary">${student.class}</p>
+                            </div>
+                            ${statusOrButton}
+                        `;
+                        app.studentSelfAttendanceList.appendChild(div);
+                    });
                 });
 
             } catch(e) {
@@ -1334,15 +1443,17 @@
             try {
                 const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
                 await setDoc(attendanceRef, { [studentId]: 'Hadir' }, { merge: true });
+                
+                app.successMessageName.textContent = studentName;
+                app.successMessageText.innerHTML = 'Kehadiran Anda berhasil dicatat.<br>Halaman ini akan tertutup otomatis...';
+                app.studentSuccessNotification.style.display = 'flex';
 
-                const parentDiv = button.parentElement;
-                parentDiv.innerHTML = `
-                    <div>
-                        <p class="font-medium">${studentName}</p>
-                        <p class="text-xs text-secondary">Terima kasih!</p>
-                    </div>
-                    <span class="font-bold text-green-400">✅ Absen Berhasil</span>
-                `;
+                setTimeout(() => {
+                    // Try to close the window
+                    window.close();
+                    // Fallback for browsers that might block window.close()
+                    document.body.innerHTML = `<div class="min-h-screen flex items-center justify-center text-center p-4"><div><h1 class="text-2xl font-bold text-green-400">Absen Berhasil!</h1><p class="text-secondary">Anda bisa menutup tab browser ini sekarang.</p></div></div>`;
+                }, 3000); // 3-second delay
 
             } catch(err) {
                 alert("Gagal menyimpan absensi. Silakan coba lagi.");
