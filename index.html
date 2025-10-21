@@ -140,6 +140,25 @@
 </head>
 <body class="antialiased">
 
+    <!-- Tampilan Absen Mandiri Siswa -->
+    <div id="student-view" class="hidden min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center">
+        <div class="w-full max-w-2xl">
+            <header class="text-center mb-6">
+                <h1 class="text-2xl sm:text-3xl font-bold text-primary">✔️ Absen Mandiri KKA</h1>
+                <p id="student-view-session-name" class="text-lg text-secondary"></p>
+                <p id="student-view-group-name" class="font-semibold accent-text"></p>
+            </header>
+            <main id="student-self-attendance-list" class="bg-secondary rounded-lg shadow p-6 space-y-3">
+                <!-- Daftar siswa untuk absen mandiri dimuat di sini -->
+                <p class="text-center text-secondary">Memuat daftar siswa...</p>
+            </main>
+            <footer class="text-center mt-4 text-xs text-secondary">
+                SMAN 1 Pangkalan Banteng
+            </footer>
+        </div>
+    </div>
+
+    <!-- Tampilan Utama Aplikasi Guru -->
     <div id="app" class="min-h-screen p-4 sm:p-6 lg:p-8">
         <header class="text-center mb-8">
             <h1 class="text-2xl sm:text-3xl font-bold text-primary">
@@ -332,8 +351,8 @@
                     <!-- Pengaturan Mode Pengguna -->
                      <div class="bg-secondary rounded-lg shadow p-6">
                         <h2 class="text-xl font-bold mb-4">Mode Pengguna</h2>
-                        <p class="text-secondary mb-2">Saat ini Anda dalam <span id="current-mode" class="font-bold">Mode Siswa</span>.</p>
-                        <button id="switch-mode-btn" class="w-full accent font-bold py-2 px-4 rounded-lg">Masuk Mode Guru</button>
+                        <p class="text-secondary mb-2">Saat ini Anda dalam <span id="current-mode" class="font-bold">Mode Guru</span>.</p>
+                        <button id="switch-mode-btn" class="w-full accent font-bold py-2 px-4 rounded-lg">Keluar (Mode Siswa)</button>
                     </div>
 
                      <!-- Ganti PIN -->
@@ -431,6 +450,11 @@
 
         // DOM Elements
         const app = {
+            mainAppView: document.getElementById('app'),
+            studentView: document.getElementById('student-view'),
+            studentViewSessionName: document.getElementById('student-view-session-name'),
+            studentViewGroupName: document.getElementById('student-view-group-name'),
+            studentSelfAttendanceList: document.getElementById('student-self-attendance-list'),
             tabs: document.querySelectorAll('.tab-button'),
             contentTabs: document.querySelectorAll('.content-tab'),
             addStudentForm: document.getElementById('add-student-form'),
@@ -798,7 +822,7 @@
         };
         
         const applyTheme = () => {
-            document.body.className = `theme-${state.settings.theme}`;
+            document.body.className = `antialiased theme-${state.settings.theme}`;
              app.themeButtons.forEach(btn => btn.classList.toggle('accent', btn.dataset.theme === state.settings.theme));
         };
         
@@ -808,7 +832,7 @@
                 el.style.display = isTeacher ? '' : 'none';
             });
             app.currentModeSpan.textContent = isTeacher ? 'Mode Guru' : 'Mode Siswa';
-            app.switchModeBtn.textContent = isTeacher ? 'Kembali ke Mode Siswa' : 'Masuk Mode Guru';
+            app.switchModeBtn.textContent = isTeacher ? 'Keluar (Mode Siswa)' : 'Masuk Mode Guru';
         };
 
         // Event Handlers
@@ -1074,6 +1098,11 @@
              if (app.pinInput.value === state.settings.pin) {
                 saveSettings({ userMode: 'teacher' });
                 app.pinModal.style.display = 'none';
+                app.mainAppView.style.opacity = '1';
+                setupMainFirestoreListeners();
+                const today = new Date();
+                app.reportMonthInput.value = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+                switchTab('absen');
             } else {
                 alert('PIN Salah!');
             }
@@ -1082,7 +1111,7 @@
 
         app.pinSubmit.addEventListener('click', handlePinSubmit);
         app.pinInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') handlePinSubmit(); });
-        app.pinCancel.addEventListener('click', () => { app.pinModal.style.display = 'none'; app.pinInput.value = ''; });
+        app.pinCancel.addEventListener('click', () => app.pinInput.value = '' );
         
         app.changePinForm.addEventListener('submit', e => {
             e.preventDefault();
@@ -1207,7 +1236,7 @@
             }
 
             const baseUrl = window.location.href.split('?')[0];
-            const qrUrl = `${baseUrl}?absen=${session.id}`;
+            const qrUrl = `${baseUrl}?absen-mandiri=${session.id}`;
 
             app.qrSessionInfo.textContent = session.name;
             app.qrSessionCode.textContent = session.id;
@@ -1225,69 +1254,141 @@
 
         app.qrCloseBtn.addEventListener('click', () => app.qrModal.style.display = 'none');
         
-        const handleQrScan = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const sessionId = urlParams.get('absen');
-            if (sessionId) {
-                history.replaceState(null, '', window.location.pathname); // Clean URL first
-                
-                const session = state.sessions.find(s => s.id === sessionId);
-                if (!session) {
-                     alert('Sesi absen tidak ditemukan atau tidak valid.');
+        const initStudentView = async (sessionId) => {
+            app.mainAppView.classList.add('hidden');
+            app.studentView.classList.remove('hidden');
+
+            try {
+                const sessionRef = doc(db, "data", "kka", "sessions", sessionId);
+                const sessionSnap = await getDoc(sessionRef);
+
+                if (!sessionSnap.exists()) {
+                    app.studentSelfAttendanceList.innerHTML = `<p class="text-center text-red-400">Error: Sesi tidak ditemukan.</p>`;
+                    return;
+                }
+                const session = sessionSnap.data();
+
+                const isOddWeek = session.week % 2 !== 0;
+                const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
+
+                app.studentViewSessionName.textContent = session.name;
+                app.studentViewGroupName.textContent = `Kelompok ${scheduledGroup}`;
+
+                const studentsRef = collection(db, "data", "kka", "students");
+                const studentsSnap = await getDocs(studentsRef);
+                const allStudents = studentsSnap.docs.map(d => ({...d.data(), id: d.id}));
+                const scheduledStudents = allStudents.filter(s => s.group === scheduledGroup).sort((a,b) => a.name.localeCompare(b.name));
+
+                const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
+                const attendanceSnap = await getDoc(attendanceRef);
+                const attendanceData = attendanceSnap.exists() ? attendanceSnap.data() : {};
+
+                app.studentSelfAttendanceList.innerHTML = '';
+                if(scheduledStudents.length === 0) {
+                     app.studentSelfAttendanceList.innerHTML = `<p class="text-center text-secondary">Tidak ada siswa yang terjadwal untuk sesi ini.</p>`;
                      return;
                 }
 
-                const studentName = prompt('Absen mandiri berhasil! Masukkan nama lengkap Anda:');
-                if (studentName) {
-                    const student = state.students.find(s => s.name.toLowerCase() === studentName.trim().toLowerCase());
-                    if (student) {
-                        const isOddWeek = session.week % 2 !== 0;
-                        const scheduledGroup = isOddWeek ? 'Pak Arya' : 'Pak Fahmi';
-                        if(student.group !== scheduledGroup){
-                            alert(`Maaf, sesi ini hanya untuk kelompok ${scheduledGroup}.`);
-                            return;
-                        }
-
-                        const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
-                        setDoc(attendanceRef, { [student.id]: 'Hadir' }, { merge: true })
-                            .then(() => alert(`Terima kasih, ${student.name}! Kehadiran Anda telah dicatat.`))
-                            .catch(err => alert("Gagal menyimpan kehadiran."));
+                scheduledStudents.forEach(student => {
+                    const studentAttendance = attendanceData[student.id];
+                    const div = document.createElement('div');
+                    div.className = 'bg-primary p-3 rounded-lg flex justify-between items-center';
+                    
+                    let statusOrButton;
+                    if(studentAttendance === 'Hadir') {
+                        statusOrButton = `<span class="font-bold text-green-400">✅ Sudah Absen</span>`;
+                    } else if (studentAttendance === 'Izin' || studentAttendance === 'Alfa') {
+                        statusOrButton = `<span class="font-semibold text-yellow-400">Tidak Hadir</span>`;
                     } else {
-                        alert('Nama tidak ditemukan. Pastikan nama yang dimasukkan sudah benar.');
+                        statusOrButton = `<button data-student-id="${student.id}" data-student-name="${student.name}" class="self-attend-btn accent font-bold py-1 px-4 rounded-lg text-sm">Hadir</button>`;
                     }
-                }
+
+                    div.innerHTML = `
+                        <div>
+                            <p class="font-medium">${student.name}</p>
+                            <p class="text-xs text-secondary">${student.class}</p>
+                        </div>
+                        ${statusOrButton}
+                    `;
+                    app.studentSelfAttendanceList.appendChild(div);
+                });
+
+            } catch(e) {
+                console.error("Error initializing student view:", e);
+                app.studentSelfAttendanceList.innerHTML = `<p class="text-center text-red-400">Terjadi kesalahan saat memuat data.</p>`;
             }
         };
 
+        app.studentSelfAttendanceList.addEventListener('click', async (e) => {
+            const button = e.target.closest('.self-attend-btn');
+            if(!button) return;
+
+            button.disabled = true;
+            button.textContent = "Menyimpan...";
+            
+            const studentId = button.dataset.studentId;
+            const studentName = button.dataset.studentName;
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('absen-mandiri');
+
+            try {
+                const attendanceRef = doc(db, "data", "kka", "attendance", sessionId);
+                await setDoc(attendanceRef, { [studentId]: 'Hadir' }, { merge: true });
+
+                const parentDiv = button.parentElement;
+                parentDiv.innerHTML = `
+                    <div>
+                        <p class="font-medium">${studentName}</p>
+                        <p class="text-xs text-secondary">Terima kasih!</p>
+                    </div>
+                    <span class="font-bold text-green-400">✅ Absen Berhasil</span>
+                `;
+
+            } catch(err) {
+                alert("Gagal menyimpan absensi. Silakan coba lagi.");
+                button.disabled = false;
+                button.textContent = "Hadir";
+                console.error(err);
+            }
+
+        });
+
         // Firestore Listeners Setup
-        let listeners = [];
-        function setupFirestoreListeners() {
-            listeners.forEach(unsub => unsub()); // Unsubscribe from old listeners
-            listeners = [];
-
+        let settingsListenerUnsubscribe = null;
+        function setupMainFirestoreListeners() {
             const studentsPath = collection(db, "data", "kka", "students");
-            const sessionsPath = collection(db, "data", "kka", "sessions");
-            const settingsPath = doc(db, "users", userId);
-
-            listeners.push(onSnapshot(studentsPath, snap => {
+            onSnapshot(studentsPath, snap => {
                 state.students = snap.docs.map(d => ({...d.data(), id:d.id}));
-                renderStudents(); // This will now filter/sort automatically
+                renderStudents();
                 renderAttendanceList();
                 renderReport();
-            }));
-            listeners.push(onSnapshot(sessionsPath, snap => {
+            });
+            const sessionsPath = collection(db, "data", "kka", "sessions");
+            onSnapshot(sessionsPath, snap => {
                 state.sessions = snap.docs.map(d => ({...d.data(), id:d.id}));
                 renderSessions();
                 renderAttendanceSessionSelector();
                 renderReport();
-            }));
-            listeners.push(onSnapshot(settingsPath, docSnap => {
+            });
+        }
+
+        function setupSettingsListenerAndShowPin() {
+            if (settingsListenerUnsubscribe) settingsListenerUnsubscribe();
+            const settingsPath = doc(db, "users", userId);
+            settingsListenerUnsubscribe = onSnapshot(settingsPath, docSnap => {
                 if (docSnap.exists()) { state.settings = { ...state.settings, ...docSnap.data() }; } 
                 else { setDoc(settingsPath, state.settings); }
                 applyTheme();
                 updateUIForUserMode();
-            }));
+                
+                if (!app.mainAppView.dataset.initialized) {
+                    app.pinModal.style.display = 'flex';
+                    app.pinInput.focus();
+                    app.mainAppView.dataset.initialized = 'true';
+                }
+            });
         }
+
 
         // --- Application Initialization ---
         const init = () => {
@@ -1303,23 +1404,27 @@
             db = getFirestore(firebaseApp);
             auth = getAuth(firebaseApp);
 
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    userId = user.uid;
-                    setupFirestoreListeners();
-                    // Initial scan check after data is loaded
-                    setTimeout(handleQrScan, 1000); 
-                } else {
-                    signInAnonymously(auth).catch(error => {
-                        console.error("Firebase anonymous sign-in error", error);
-                        document.body.innerHTML = `<div class="text-center p-8 text-red-400">Autentikasi gagal. Tidak dapat memuat aplikasi.</div>`;
-                    });
-                }
-            });
-            
-            const today = new Date();
-            app.reportMonthInput.value = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
-            switchTab(state.activeTab);
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentSessionId = urlParams.get('absen-mandiri');
+
+            if (studentSessionId) {
+                // Initialize student view
+                initStudentView(studentSessionId);
+            } else {
+                // Initialize main teacher view
+                app.mainAppView.style.opacity = '0'; // Hide app until login
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        userId = user.uid;
+                        setupSettingsListenerAndShowPin();
+                    } else {
+                        signInAnonymously(auth).catch(error => {
+                            console.error("Firebase anonymous sign-in error", error);
+                            document.body.innerHTML = `<div class="text-center p-8 text-red-400">Autentikasi gagal. Tidak dapat memuat aplikasi.</div>`;
+                        });
+                    }
+                });
+            }
         };
 
         init();
